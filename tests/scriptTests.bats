@@ -157,6 +157,29 @@ STUB
   [[ "$output" =~ "No Wi-Fi interface found" ]]
 }
 
+@test "wifi.sh: the network name row offers a rescan modifier" {
+  export MOCK_HELPER=names
+  run bash -c '. src/wifi.sh'
+  echo "$output" | jq -e '.items[] | select(.mods.cmd.arg == "RESCAN") | .mods.cmd.subtitle' | grep -q Rescan
+}
+
+@test "wifi.sh: rescan action drops a marker file" {
+  export alfred_workflow_cache="$BATS_TEST_TMPDIR/cache"
+  run bash -c '. src/wifi.sh RESCAN'
+  [ "$status" -eq 0 ]
+  [ -f "$alfred_workflow_cache/wifi_rescan" ]
+}
+
+@test "wifi.sh: a rescan marker forces a fresh scan" {
+  export alfred_workflow_cache="$BATS_TEST_TMPDIR/cache"
+  mkdir -p "$alfred_workflow_cache"
+  touch "$alfred_workflow_cache/wifi_rescan"
+  run bash -c '. src/wifi.sh'
+  [[ "$output" =~ "Rescanning Wi-Fi" ]]
+  [[ "$output" =~ '"rerun"' ]]
+  [ ! -f "$alfred_workflow_cache/wifi_rescan" ]   # marker consumed
+}
+
 # --- ethernet.sh -----------------------------------------------------------
 
 @test "ethernet.sh: show connected info" {

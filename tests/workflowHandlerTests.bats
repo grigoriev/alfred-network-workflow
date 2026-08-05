@@ -60,6 +60,25 @@ setup() {
   [[ "$output" =~ '"valid":false' ]]
 }
 
+@test "addResult: adds a cmd modifier when given" {
+  addResult "" "Net" "Net" "sub" "i.png" "" "" "Rescan" "RESCAN"
+  run getJSONResults
+  echo "$output" | jq -e '.items[0].mods.cmd | .valid == true and .arg == "RESCAN" and .subtitle == "Rescan"' >/dev/null
+}
+
+@test "addResult: routes the cmd modifier arg through ARG_PREFIX" {
+  ARG_PREFIX="wifi "
+  addResult "" "Net" "Net" "sub" "i.png" "" "" "Rescan" "RESCAN"
+  run getJSONResults
+  echo "$output" | jq -e '.items[0].mods.cmd.arg == "wifi RESCAN"' >/dev/null
+}
+
+@test "addResult: no mods key without a modifier arg" {
+  addResult "" "Net" "Net" "sub" "i.png"
+  run getJSONResults
+  [[ ! "$output" =~ '"mods"' ]]
+}
+
 @test "getJSONResults: empty result set is valid json" {
   run getJSONResults
   [ "$output" == '{"items":[]}' ]
