@@ -33,6 +33,8 @@ addVariable() {
 # $5 icon
 # $6 valid (pass "no" for a non-actionable item; anything else is valid)
 # $7 autocomplete
+# $8 cmd modifier subtitle (optional, shown when ⌘ is held)
+# $9 cmd modifier arg (optional; the arg used when ⌘⏎ selects the item)
 ###############################################################################
 addResult() {
   # Router subcommands set ARG_PREFIX so a selected item's arg routes back
@@ -40,6 +42,12 @@ addResult() {
   local ARG="$2"
   if [ -n "$ARG_PREFIX" ] && [ -n "$ARG" ]; then
     ARG="$ARG_PREFIX$ARG"
+  fi
+
+  # A ⌘ modifier routes its own arg the same way as the item arg.
+  local MODARG="$9"
+  if [ -n "$ARG_PREFIX" ] && [ -n "$MODARG" ]; then
+    MODARG="$ARG_PREFIX$MODARG"
   fi
 
   local ITEM="{"
@@ -57,6 +65,9 @@ addResult() {
   fi
   if [ -n "$7" ]; then
     ITEM+="\"autocomplete\":\"$(jsonEncode "$7")\","
+  fi
+  if [ -n "$MODARG" ]; then
+    ITEM+="\"mods\":{\"cmd\":{\"valid\":true,\"arg\":\"$(jsonEncode "$MODARG")\",\"subtitle\":\"$(jsonEncode "$8")\"}},"
   fi
   ITEM="${ITEM%,}}"
   RESULTS+=("$ITEM")

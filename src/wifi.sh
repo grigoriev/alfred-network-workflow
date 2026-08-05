@@ -3,12 +3,20 @@
 . src/wifiCommon.sh
 . src/workflowHandler.sh
 
+RESCAN_MARK="${alfred_workflow_cache:-/tmp}/wifi_rescan"
+
 # Handle action
 if [ "$1" != "" ]; then
   if [ "$1" == "On" ] || [ "$1" == "Off" ]; then
   	networksetup -setairportpower "$INTERFACE" "$1"
   elif [ "$1" == "LOCATION" ]; then
     openLocationSettings
+  elif [ "$1" == "RESCAN" ]; then
+    # Drop a marker so the reopened list skips the cache and scans live,
+    # then reopen net wifi. The live scan there also refreshes the cache.
+    mkdir -p "$(dirname "$RESCAN_MARK")" 2>/dev/null
+    touch "$RESCAN_MARK" 2>/dev/null
+    osascript -e 'tell application "Alfred 5" to search "net wifi "' >/dev/null 2>&1
   else
     echo "$1" | tr -d '\n'
   fi
@@ -39,11 +47,23 @@ fi
 # The scanner prefers a saved network when identifying the connected one.
 WIFI_SAVED=$(networksetup -listpreferredwirelessnetworks "$INTERFACE" 2>/dev/null)
 export WIFI_SAVED
-NETWORKS=$(scanNetworks "$INTERFACE" cached)
+
+# A rescan request (⌘⏎) drops a marker so this pass skips the cache and forces
+# a live scan through the "Checking" rerun below.
+FORCED=""
+if [ -f "$RESCAN_MARK" ]; then
+  rm -f "$RESCAN_MARK"
+  FORCED=1
+  NETWORKS="[]"
+else
+  NETWORKS=$(scanNetworks "$INTERFACE" cached)
+fi
 SSID=$(getActiveScanSSID "$NETWORKS")
 
 if [ -z "$SSID" ] && [ -z "$wifi_checking" ]; then
-  addResult "" "" "Checking Wi-Fi…" "Reading the current network name" "$ICON_WIFI" "no"
+  MSG="Checking Wi-Fi…"
+  [ -n "$FORCED" ] && MSG="Rescanning Wi-Fi…"
+  addResult "" "" "$MSG" "Reading the current network name" "$ICON_WIFI" "no"
   setRerun 0.1
   addVariable wifi_checking 1
   getJSONResults
@@ -72,12 +92,15 @@ if [ "$IPv6" != "" ]; then
   addResult "" "$IPv6" "$IPv6" "IPv6 address ($NETCONFIG)" "$ICON_WIFI"
 fi
 
-# Output the Wi-Fi network name (read from the scan above)
+# Output the Wi-Fi network name (read from the scan above). Hold ⌘ to force a
+# fresh scan, in case the cached name is stale.
 if [ "$SSID" != "" ] && [ "$SSID" != "<redacted>" ]; then
-  addResult "" "$SSID" "$SSID" "$NAME access point ($AUTH)" "$ICON_WIFI"
+  addResult "" "$SSID" "$SSID" "$NAME access point ($AUTH)" "$ICON_WIFI" "" "" \
+    "↻ Rescan Wi-Fi networks" "RESCAN"
 else
   # macOS hides the name unless the app reading Wi-Fi has Location access
-  addResult "" "LOCATION" "Wi-Fi name hidden by macOS" "Press ⏎ to open Location Services, then enable it for Alfred" "$ICON_WIFI_ERROR"
+  addResult "" "LOCATION" "Wi-Fi name hidden by macOS" "Press ⏎ to open Location Services, then enable it for Alfred" "$ICON_WIFI_ERROR" "" "" \
+    "↻ Rescan Wi-Fi networks" "RESCAN"
 fi
 
 # Output global IP
