@@ -42,6 +42,11 @@ load variables
   [ "$output" = "" ]
 }
 
+@test "getIPv6: get existing IPv6" {
+  run getIPv6 "IPv6 IP address: fe80::1"
+  [ "$output" = "fe80::1" ]
+}
+
 @test "getSummaryValue: get SSID" {
   run getSummaryValue "$SUMMARY" "SSID"
   [ "$output" = "Test-Network" ]
