@@ -37,17 +37,11 @@ setup() {
   [ "$output" == "10.0.0.1" ]
 }
 
-@test "wifi.sh: redacted ssid shows location hint" {
+@test "wifi.sh: redacted ssid shows a non-actionable hint" {
   export MOCK_IP=redacted
   run bash -c '. src/wifi.sh'
-  [[ "$output" =~ "Grant Location access" ]]
-  [[ "$output" =~ '"arg":"LOCATION"' ]]
-}
-
-@test "wifi.sh: location action opens settings" {
-  run bash -c '. src/wifi.sh LOCATION'
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "Privacy_LocationServices" ]]
+  [[ "$output" =~ "hidden by macOS" ]]
+  [[ ! "$output" =~ "LOCATION" ]]
 }
 
 @test "wifi.sh: shows IPv6 when present" {
@@ -116,18 +110,13 @@ setup() {
   [ "$output" == "" ]
 }
 
-@test "ap.sh: redacted names show location hint" {
+@test "ap.sh: redacted names show a hint and hidden networks" {
   export ap_scanning=1
   export MOCK_SPA=redacted
   run bash -c '. src/ap.sh'
-  [[ "$output" =~ "Grant Location access" ]]
-  [[ "$output" =~ '"arg":"LOCATION"' ]]
-}
-
-@test "ap.sh: location action opens settings" {
-  run bash -c '. src/ap.sh LOCATION'
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "Privacy_LocationServices" ]]
+  [[ "$output" =~ "hidden by macOS" ]]
+  [[ "$output" =~ "Hidden network" ]]
+  [[ ! "$output" =~ "LOCATION" ]]
 }
 
 @test "ap.sh: no networks found" {
