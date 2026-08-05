@@ -271,16 +271,16 @@ getScanStrength() {
   fi
 }
 
-# Parse `system_profiler SPAirPortDataType` scan output into tuples
+# Parse `system_profiler SPAirPortDataType` output into a JSON array of
+# networks: [{ section, ssid, channel, security, rssi }]. section is "current"
+# for the active network, "other" for the rest. Used as the redacted fallback
+# when the CoreWLAN scanner returns nothing.
 # $1 = system_profiler SPAirPortDataType text
 # $2 = Wi-Fi interface name (e.g. en0)
-# $! = One line per network: SECTION~SSID~CHANNEL~SECURITY~RSSI
-#      SECTION is "current" for the active network, "other" for the rest.
-#      airport was removed in macOS 14.4, so system_profiler is the source.
 parseScanResults() {
   echo "$1" | awk -v iface="$2" '
     function flush() {
-      if (ssid != "") { print section "~" ssid "~" channel "~" security "~" rssi }
+      if (ssid != "") { printf "%s\t%s\t%s\t%s\t%s\n", section, ssid, channel, security, rssi }
       ssid=""; channel=""; security=""; rssi=""
     }
     # Interface header (8 spaces): scope parsing to the Wi-Fi interface
@@ -301,29 +301,29 @@ parseScanResults() {
     # Network name header (12 spaces, ends with a colon)
     /^            .*:$/ { flush(); s=$0; sub(/^ */,"",s); sub(/:$/,"",s); ssid=s; next }
     END { flush() }
-  '
+  ' | jq -Rn '[inputs | split("\t")
+    | {section:.[0], ssid:.[1], channel:(.[2]|tonumber? // 0), security:.[3], rssi:(.[4]|tonumber? // 0)}]'
 }
 
-# Get the active network SSID from scan output
-# $1 = system_profiler SPAirPortDataType text
-# $2 = Wi-Fi interface name (e.g. en0)
+# Get the active network SSID from a scan JSON array
+# $1 = networks JSON
 # $! = String
 getActiveScanSSID() {
-  parseScanResults "$1" "$2" | awk -F'~' '$1 == "current" { print $2; exit }'
+  jq -r 'map(select(.section == "current"))[0].ssid // empty' <<< "$1"
 }
 
 # Scan Wi-Fi networks. Reads real SSIDs with CoreWLAN through osascript, whose
 # Apple-signed context is allowed to on macOS 14+ (no prompt or signing needed).
 # Falls back to system_profiler (redacted names) if that returns nothing.
 # $1 = Wi-Fi interface name
-# $! = SECTION~SSID~CHANNEL~SECURITY~RSSI lines
+# $! = JSON array of { section, ssid, channel, security, rssi }
 scanNetworks() {
   local SRC="src/wifi-scan.js"
 
   if [ -f "$SRC" ]; then
     local OUT
     OUT=$(osascript -l JavaScript "$SRC" 2>/dev/null)
-    if [ -n "$OUT" ]; then
+    if [ -n "$OUT" ] && [ "$OUT" != "[]" ]; then
       echo "$OUT"
       return
     fi
@@ -332,27 +332,26 @@ scanNetworks() {
   parseScanResults "$(system_profiler SPAirPortDataType 2>/dev/null)" "$1"
 }
 
-# Build access point details from a scan tuple
-# $1 = SECTION~SSID~CHANNEL~SECURITY~RSSI (from parseScanResults)
-# $2 = SSID of the active access point (optional)
-# $3 = List of favorite access points (optional)
-# $! = Separated string: PRIORITY~SSID~BSSID~RSSI~CHANNEL~SECURITY~AP_ICON
-#      BSSID is empty; system_profiler does not expose it.
+# Annotate a scan network with its priority and icon.
+# $1 = network JSON { section, ssid, channel, security, rssi }
+# $2 = List of favorite access points (optional)
+# $! = JSON { priority, ssid, channel, security, rssi, icon }
 getScanDetails() {
-  IFS='~' read -r -a F <<< "$1"
-  local SECTION="${F[0]}" SSID="${F[1]}" CHANNEL="${F[2]}" SECURITY="${F[3]}" RSSI="${F[4]}"
+  local SECTION SSID CHANNEL SECURITY RSSI
+  { read -r SECTION; read -r SSID; read -r CHANNEL; read -r SECURITY; read -r RSSI; } \
+    < <(jq -r '.section, .ssid, .channel, .security, .rssi' <<< "$1")
 
   if [ "$SSID" == "" ]; then
     return
   fi
 
-  local FAVORITED=$(listContains "$3" "$SSID")
-  local PRIORITY=$PRIORITY_LOW
-  local AP_ICON
+  local FAVORITED PRIORITY AP_ICON
+  FAVORITED=$(listContains "$2" "$SSID")
+  PRIORITY=$PRIORITY_LOW
 
-  # A redacted SSID cannot be matched by name, so only the current network
-  # section identifies the active one; otherwise all redacted rows would match.
-  if [ "$SECTION" == "current" ] || { [ "$SSID" != "<redacted>" ] && [ "$2" != "" ] && [ "$SSID" == "$2" ]; }; then
+  # Only the scan's "current" section marks the connected network. Matching by
+  # SSID would flag every access point that shares the name (e.g. a hotel).
+  if [ "$SECTION" == "current" ]; then
     AP_ICON=$ICON_WIFI_ACTIVE_
     PRIORITY=$PRIORITY_HIGH
   elif [ "$FAVORITED" != "" ]; then
@@ -366,7 +365,14 @@ getScanDetails() {
 
   AP_ICON=$AP_ICON$(getScanStrength "$RSSI")$ICON_END
 
-  echo "$PRIORITY"~"$SSID"~""~"$RSSI"~"$CHANNEL"~"$SECURITY"~"$AP_ICON"
+  jq -nc \
+    --argjson priority "$PRIORITY" \
+    --arg ssid "$SSID" \
+    --argjson channel "${CHANNEL:-0}" \
+    --arg security "$SECURITY" \
+    --argjson rssi "${RSSI:-0}" \
+    --arg icon "$AP_ICON" \
+    '{priority:$priority, ssid:$ssid, channel:$channel, security:$security, rssi:$rssi, icon:$icon}'
 }
 
 # Open the macOS Location Services settings pane

@@ -48,23 +48,17 @@ if [ "$IPv6" != "" ]; then
   addResult "" "$IPv6" "$IPv6" "IPv6 address ($NETCONFIG)" "$ICON_WIFI"
 fi
 
-# Output WiFi AP info
-SUMMARY=$(ipconfig getsummary "$INTERFACE" 2>/dev/null)
-SSID=$(getSummaryValue "$SUMMARY" "SSID")
-BSSID=$(getSummaryValue "$SUMMARY" "BSSID")
-AUTH=$(getSummaryValue "$SUMMARY" "Security")
+# Output WiFi AP info. Read the current network name via CoreWLAN (osascript),
+# since ipconfig and system_profiler redact it.
+NETWORKS=$(scanNetworks "$INTERFACE")
+SSID=$(getActiveScanSSID "$NETWORKS")
+AUTH=$(jq -r 'map(select(.section == "current"))[0].security // ""' <<< "$NETWORKS")
 
-# Use BSSID with SSID as fallback
-SSID_NAME="$SSID ($BSSID)"
-if [ "$BSSID" == "" ] || [ "$BSSID" == "<redacted>" ]; then
-  SSID_NAME="$SSID"
-fi
-
-if [ "$SSID" == "<redacted>" ]; then
+if [ "$SSID" != "" ] && [ "$SSID" != "<redacted>" ]; then
+  addResult "" "$SSID" "$SSID" "$NAME access point ($AUTH)" "$ICON_WIFI"
+else
   # macOS hides the name unless the app reading Wi-Fi has Location access
   addResult "" "LOCATION" "Wi-Fi name hidden by macOS" "Press ⏎ to open Location Services, then enable it for Alfred" "$ICON_WIFI_ERROR"
-elif [ "$SSID" != "" ]; then
-  addResult "" "$SSID" "$SSID_NAME" "$NAME access point ($AUTH)" "$ICON_WIFI"
 fi
 
 # Output global IP

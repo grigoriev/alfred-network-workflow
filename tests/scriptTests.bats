@@ -76,16 +76,16 @@ STUB
 
 # --- scanNetworks (CoreWLAN helper) ----------------------------------------
 
-@test "scanNetworks: uses the helper output when authorized" {
+@test "scanNetworks: uses the helper json when authorized" {
   export MOCK_HELPER=names
   run bash -c '. src/helpers.sh; scanNetworks en0'
-  [[ "$output" =~ "current~HomeNet~36~WPA2 Personal~-45" ]]
-  [[ "$output" =~ "other~CoffeeShop" ]]
+  echo "$output" | jq -e 'map(select(.section=="current"))[0].ssid == "HomeNet"' >/dev/null
+  echo "$output" | jq -e 'any(.[]; .ssid == "CoffeeShop")' >/dev/null
 }
 
-@test "scanNetworks: falls back to system_profiler when the helper is empty" {
+@test "scanNetworks: falls back to system_profiler json when the helper is empty" {
   run bash -c '. src/helpers.sh; scanNetworks en0'
-  [[ "$output" =~ "HomeNet" ]]
+  echo "$output" | jq -e 'any(.[]; .ssid == "HomeNet")' >/dev/null
 }
 
 # --- wifi.sh ---------------------------------------------------------------
@@ -115,8 +115,14 @@ STUB
   [ "$output" == "10.0.0.1" ]
 }
 
+@test "wifi.sh: shows the current network name from the helper" {
+  export MOCK_HELPER=names
+  run bash -c '. src/wifi.sh'
+  [[ "$output" =~ "HomeNet" ]]
+}
+
 @test "wifi.sh: redacted ssid shows an actionable hint" {
-  export MOCK_IP=redacted
+  export MOCK_SPA=redacted
   run bash -c '. src/wifi.sh'
   [[ "$output" =~ "hidden by macOS" ]]
   [[ "$output" =~ '"arg":"LOCATION"' ]]

@@ -33,12 +33,13 @@ Everything lives under one keyword. Type `net` to see the command catalog, then 
 
 ## macOS 14 and later
 
-Apple removed the `airport` cli in macOS 14.4. This fork replaces it:
+Apple removed the `airport` cli in macOS 14.4, which broke Wi-Fi scanning. This fork works around it.
 
-- `wifilist` scans with `system_profiler SPAirPortDataType`.
-- `wifi` reads the current connection with `ipconfig getsummary`.
+macOS 14+ hides Wi-Fi network names (SSID and BSSID) from most processes for privacy. The known workarounds (a compiled CoreWLAN helper, or `system_profiler`) return redacted names unless the app has Location access, and getting that requires a signed, notarized app.
 
-macOS hides network names (SSID and BSSID) until the workflow has Location access. To see names, open **System Settings > Privacy & Security > Location Services** and enable location for Alfred.
+**The workaround this fork uses:** read Wi-Fi with CoreWLAN through `osascript`. `osascript` is an Apple-signed system binary whose context is allowed to read SSIDs, so a small JXA script ([`src/wifi-scan.js`](src/wifi-scan.js)) run with `osascript -l JavaScript` returns real network names, channel, security and signal as JSON, with **no Location prompt, no code signing and no compiled binary**. The scripts parse that JSON with `jq`. `net wifilist` lists the networks and `net wifi` shows the current one's name; both fall back to `system_profiler SPAirPortDataType` (redacted names) only if the scanner returns nothing.
+
+`jq` ships with macOS since Sequoia, so this needs a recent macOS (tested on macOS 26).
 
 ## Limitations
 
@@ -48,7 +49,7 @@ macOS hides network names (SSID and BSSID) until the workflow has Location acces
 
 ## How it works
 
-The logic lives in `src/` as Bash scripts. `info.plist` is the Alfred workflow definition: it maps each keyword to its script and wires the connect actions. Every command runs `src/<name>.sh`, talks to macOS network utilities (`networksetup`, `scutil`, `system_profiler`, `ipconfig`), and returns Alfred JSON feedback.
+`net` is the single entry point. `net.sh` is a router: with no argument it lists the command catalog, and `net <command>` dispatches to `src/<command>.sh`, prefixing item args so selections route back through `net`. The scripts talk to macOS network utilities (`networksetup`, `scutil`, `osascript`, `ipconfig`) and return Alfred JSON feedback. `info.plist` wires the single `net` Script Filter to a Run Script and Copy to Clipboard.
 
 ## Development
 
@@ -61,7 +62,7 @@ make build    # fetch the updater and build Network.alfredworkflow
 make clean     # remove the build artifact and fetched files
 ```
 
-Install the tools with `brew install bats-core shellcheck`. System commands are replaced by mocks under `tests/mocks/bin`, so the action scripts run deterministically without touching real network state.
+Install the tools with `brew install bats-core shellcheck jq`. System commands are replaced by mocks under `tests/mocks/bin`, so the action scripts run deterministically without touching real network state. The Wi-Fi scanner ([`src/wifi-scan.js`](src/wifi-scan.js)) is unit tested via a `WIFI_SCAN_TEST` hook that feeds it fixed data instead of scanning.
 
 The self-update logic is shared, not vendored. `make build` fetches
 [`update.sh`](https://github.com/grigoriev/alfred-workflow-updater) at build time and bundles it, so it is never stored in this repository.

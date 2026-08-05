@@ -29,10 +29,10 @@ build: verify-updater
 test:
 	bats tests
 
-# Confirm the Wi-Fi scanner script parses and runs
+# Confirm the Wi-Fi scanner produces valid JSON
 verify-js:
-	osascript -l JavaScript src/wifi-scan.js >/dev/null
-	@echo "wifi-scan.js runs"
+	osascript -l JavaScript src/wifi-scan.js | jq -e . >/dev/null
+	@echo "wifi-scan.js outputs valid json"
 
 lint:
 	shellcheck -x --severity=warning $(SCRIPTS)
