@@ -11,7 +11,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: ShellCheck
-        run: shellcheck -x --severity=warning src/wifi.sh src/ethernet.sh src/ap.sh src/dns.sh src/vpn.sh
+        run: make lint
 
   test:
     runs-on: macos-latest
@@ -24,7 +24,7 @@ jobs:
         run: brew install bats-core
 
       - name: Test
-        run: bats --tap tests
+        run: make test
 
   build:
     runs-on: ubuntu-latest
@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Alfred Workflow
-        run: zip -r Network.alfredworkflow . -x '.git/*' '.github/*' '.gitignore' 'Network.alfredworkflow'
+        run: make build
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
