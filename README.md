@@ -14,13 +14,17 @@ Alfred [Powerpack](https://www.alfredapp.com/powerpack/) is required.
 
 ## Usage
 
+Type `anw` to see every command in one place, then press <kbd>Tab</kbd> to drill into one. Or use a command keyword directly:
+
 | Keyword    | Action                                          |
 | ---------- | ----------------------------------------------- |
+| `anw`      | Hub: list all commands and updates.             |
 | `wifi`     | Show Wi-Fi info, toggle Wi-Fi on or off.        |
 | `eth`      | Show Ethernet info when connected.              |
 | `wifilist` | Scan for Wi-Fi networks and connect.            |
 | `vpn`      | List configured VPNs and connect.               |
 | `dns`      | List and change DNS for the primary connection. |
+| `update`   | Check for and install workflow updates.         |
 
 <p align="center">
 <img src="https://raw.githubusercontent.com/grigoriev/alfred-network-workflow/master/screenshots/wifi-preview.png" alt="wifi" width="600">

@@ -10,6 +10,19 @@ setup() {
   export alfred_workflow_data="$BATS_TEST_TMPDIR/data"
 }
 
+# --- anw.sh (hub) ----------------------------------------------------------
+
+@test "anw.sh: hub lists every command with autocomplete" {
+  run bash -c '. src/anw.sh'
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ '"autocomplete":"wifi ' ]]
+  [[ "$output" =~ '"autocomplete":"eth ' ]]
+  [[ "$output" =~ '"autocomplete":"wifilist ' ]]
+  [[ "$output" =~ '"autocomplete":"vpn ' ]]
+  [[ "$output" =~ '"autocomplete":"dns ' ]]
+  [[ "$output" =~ '"autocomplete":"update ' ]]
+}
+
 # --- wifi.sh ---------------------------------------------------------------
 
 @test "wifi.sh: show connected info" {

@@ -126,7 +126,7 @@
 	<key>disabled</key>
 	<false/>
 	<key>name</key>
-	<string>Network</string>
+	<string>Alfred Network Workflow</string>
 	<key>objects</key>
 	<array>
 		<dict>
@@ -524,7 +524,7 @@
 				<key>escaping</key>
 				<integer>102</integer>
 				<key>keyword</key>
-				<string>network-update</string>
+				<string>update</string>
 				<key>queuedelaycustom</key>
 				<integer>3</integer>
 				<key>queuedelayimmediatelyinitially</key>
@@ -544,7 +544,7 @@
 				<key>subtext</key>
 				<string>Check for and install workflow updates</string>
 				<key>title</key>
-				<string>Network Update</string>
+				<string>Update</string>
 				<key>type</key>
 				<integer>0</integer>
 				<key>withspace</key>
@@ -579,6 +579,55 @@
 			<string>EA1DFD6E-DBC2-46B5-B653-7FD06D1C5DB6</string>
 			<key>version</key>
 			<integer>2</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>alfredfiltersresults</key>
+				<true/>
+				<key>alfredfiltersresultsmatchmode</key>
+				<integer>0</integer>
+				<key>argumenttreatemptyqueryasnil</key>
+				<false/>
+				<key>argumenttrimmode</key>
+				<integer>0</integer>
+				<key>argumenttype</key>
+				<integer>1</integer>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>keyword</key>
+				<string>anw</string>
+				<key>queuedelaycustom</key>
+				<integer>3</integer>
+				<key>queuedelayimmediatelyinitially</key>
+				<true/>
+				<key>queuedelaymode</key>
+				<integer>0</integer>
+				<key>queuemode</key>
+				<integer>1</integer>
+				<key>runningsubtext</key>
+				<string></string>
+				<key>script</key>
+				<string>. src/anw.sh</string>
+				<key>scriptargtype</key>
+				<integer>0</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>subtext</key>
+				<string>All network commands</string>
+				<key>title</key>
+				<string>Alfred Network Workflow</string>
+				<key>type</key>
+				<integer>0</integer>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.scriptfilter</string>
+			<key>uid</key>
+			<string>74DB3091-023E-4A6D-803A-4921960C8192</string>
+			<key>version</key>
+			<integer>3</integer>
 		</dict>
 	</array>
 	<key>readme</key>
@@ -626,6 +675,13 @@
 			<real>230.0</real>
 			<key>ypos</key>
 			<real>140.0</real>
+		</dict>
+		<key>74DB3091-023E-4A6D-803A-4921960C8192</key>
+		<dict>
+			<key>xpos</key>
+			<integer>40</integer>
+			<key>ypos</key>
+			<integer>40</integer>
 		</dict>
 		<key>82D72C1A-0B33-483F-AA5E-E25B02CC7971</key>
 		<dict>
