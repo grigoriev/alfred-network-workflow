@@ -76,7 +76,16 @@ setup() {
 
 # --- ap.sh (wifilist) ------------------------------------------------------
 
+@test "ap.sh: first pass shows scanning and reruns" {
+  run bash -c '. src/ap.sh'
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "Scanning for Wi-Fi networks" ]]
+  [[ "$output" =~ '"rerun":' ]]
+  [[ "$output" =~ '"ap_scanning":"1"' ]]
+}
+
 @test "ap.sh: list scanned networks" {
+  export ap_scanning=1
   run bash -c '. src/ap.sh'
   [ "$status" -eq 0 ]
   [[ "$output" =~ "HomeNet" ]]
@@ -95,12 +104,14 @@ setup() {
 }
 
 @test "ap.sh: redacted names show location hint" {
+  export ap_scanning=1
   export MOCK_SPA=redacted
   run bash -c '. src/ap.sh'
   [[ "$output" =~ "Grant Location access" ]]
 }
 
 @test "ap.sh: no networks found" {
+  export ap_scanning=1
   export MOCK_SPA=empty
   run bash -c '. src/ap.sh'
   [[ "$output" =~ "No access points found" ]]

@@ -19,6 +19,16 @@ if [ "$1" != "" ]; then
   exit
 fi
 
+# The scan takes a few seconds. On the first pass show a placeholder and
+# ask Alfred to re-run, so the scan runs while "Scanning" is on screen.
+if [ -z "$ap_scanning" ]; then
+  addResult "" "" "Scanning for Wi-Fi networks…" "This can take a few seconds" "$ICON_WIFI" "no"
+  setRerun 0.1
+  addVariable ap_scanning 1
+  getJSONResults
+  exit
+fi
+
 # airport was removed in macOS 14.4, so scan with system_profiler
 SCAN=$(system_profiler SPAirPortDataType 2>/dev/null)
 SAVED_APS=$(networksetup -listpreferredwirelessnetworks "$INTERFACE")

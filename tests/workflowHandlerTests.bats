@@ -51,6 +51,16 @@ setup() {
   [ "$output" == '{"items":[]}' ]
 }
 
+@test "getJSONResults: emit rerun and variables" {
+  setRerun 0.1
+  addVariable "ap_scanning" "1"
+  addResult "" "" "Scanning" "" "i.png" "no" ""
+  run getJSONResults
+  [[ "$output" =~ '"rerun":0.1' ]]
+  [[ "$output" =~ '"variables":{"ap_scanning":"1"}' ]]
+  [[ "$output" =~ '"items":[' ]]
+}
+
 @test "setPref and getPref: store and read a value" {
   setPref "server" "8.8.8.8" 1
   run getPref "server" 1

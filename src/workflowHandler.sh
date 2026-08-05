@@ -1,6 +1,27 @@
 #!/bin/bash
 
 RESULTS=()
+RERUN=""
+VARIABLES=()
+
+###############################################################################
+# Ask Alfred to re-run the script filter after N seconds (0.1 - 5.0)
+#
+# $1 delay in seconds
+###############################################################################
+setRerun() {
+  RERUN="$1"
+}
+
+###############################################################################
+# Set an Alfred variable, passed back to the script on the next run
+#
+# $1 key
+# $2 value
+###############################################################################
+addVariable() {
+  VARIABLES+=("$1"$'\t'"$2")
+}
 
 ################################################################################
 # Adds a result to the result array
@@ -38,8 +59,29 @@ addResult() {
 # Prints the feedback json to stdout (Alfred Script Filter format)
 ###############################################################################
 getJSONResults() {
-  local OUT="{\"items\":["
-  local I=0
+  local OUT="{"
+
+  if [ -n "$RERUN" ]; then
+    OUT+="\"rerun\":$RERUN,"
+  fi
+
+  if [ "${#VARIABLES[@]}" -gt 0 ]; then
+    OUT+="\"variables\":{"
+    local J=0 PAIR KEY VAL
+    for PAIR in "${VARIABLES[@]}"; do
+      KEY="${PAIR%%$'\t'*}"
+      VAL="${PAIR#*$'\t'}"
+      if [ "$J" -gt 0 ]; then
+        OUT+=","
+      fi
+      OUT+="\"$(jsonEncode "$KEY")\":\"$(jsonEncode "$VAL")\""
+      J=$((J + 1))
+    done
+    OUT+="},"
+  fi
+
+  OUT+="\"items\":["
+  local I=0 R
   for R in "${RESULTS[@]}"; do
     if [ "$I" -gt 0 ]; then
       OUT+=","
