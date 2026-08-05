@@ -48,21 +48,19 @@ The logic lives in `src/` as Bash scripts. `info.plist` is the Alfred workflow d
 
 ## Development
 
-Tests use [bats](https://github.com/bats-core/bats-core):
+A `Makefile` drives the same steps locally and in CI:
 
 ```sh
-brew install bats-core
-bats tests
+make lint     # ShellCheck the action scripts
+make test     # run the bats tests
+make build    # fetch the updater and build Network.alfredworkflow
+make clean     # remove the build artifact and fetched files
 ```
 
-System commands are replaced by mocks under `tests/mocks/bin`, so the action scripts run deterministically without touching real network state.
+Install the tools with `brew install bats-core shellcheck`. System commands are replaced by mocks under `tests/mocks/bin`, so the action scripts run deterministically without touching real network state.
 
-[ShellCheck](https://www.shellcheck.net/) lints the scripts in CI:
-
-```sh
-brew install shellcheck
-shellcheck -x src/wifi.sh src/ethernet.sh src/ap.sh src/dns.sh src/vpn.sh
-```
+The self-update logic is shared, not vendored. `make build` fetches
+[`update.sh`](https://github.com/grigoriev/alfred-workflow-updater) at build time and bundles it, so it is never stored in this repository.
 
 ## Releases
 

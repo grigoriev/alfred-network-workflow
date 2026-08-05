@@ -2,3 +2,9 @@ node_modules
 todo.md
 temp
 .DS_Store
+
+# Fetched at build time from grigoriev/alfred-workflow-updater
+src/update.sh
+
+# Build artifact
+Network.alfredworkflow

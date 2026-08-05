@@ -20,7 +20,7 @@ jobs:
         run: plutil -replace version -string "${GITHUB_REF_NAME#v}" info.plist
 
       - name: Build Alfred Workflow
-        run: zip -r Network.alfredworkflow . -x '.git/*' '.github/*' '.gitignore' 'Network.alfredworkflow'
+        run: make build
 
       - name: Create Release
         env:
