@@ -8,7 +8,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
 
       - name: Install bats
         run: brew install bats-core
@@ -22,20 +22,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
 
       - name: Build Alfred Workflow
-        uses: mperezi/build-alfred-workflow@v1
-        id: alfred_builder
-        with:
-          workflow_dir: "."
-          exclude_patterns: ".git/* .github/* .gitignore"
-
-      - name: Rename
-        run: mv ${{ steps.alfred_builder.outputs.workflow_file }} Network.alfredworkflow
+        run: zip -r Network.alfredworkflow . -x '.git/*' '.github/*' '.gitignore' 'Network.alfredworkflow'
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: Network.alfredworkflow
           path: Network.alfredworkflow
