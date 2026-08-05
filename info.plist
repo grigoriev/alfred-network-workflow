@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>bundleid</key>
-	<string>dk.rodalgaard.alfred.network</string>
+	<string>com.grigoriev.alfred.network</string>
 	<key>category</key>
 	<string>Tools</string>
 	<key>connections</key>
@@ -107,7 +107,7 @@
 		</array>
 	</dict>
 	<key>createdby</key>
-	<string>Martin Rodalgaard</string>
+	<string>Sergey Grigoriev</string>
 	<key>description</key>
 	<string>Show and change your network settings</string>
 	<key>disabled</key>
