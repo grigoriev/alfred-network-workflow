@@ -13,14 +13,13 @@ load variables
   [ "${ARRAY[2]}" == "Martins iPhone" ]
 }
 
-@test "parseScanResults: parse current and other networks" {
+@test "parseScanResults: parse into a json array" {
   run parseScanResults "$SCAN" "en0"
 
   [ "$status" -eq 0 ]
-  [ "${lines[0]}" == "current~HomeNet~36~WPA2 Personal~-45" ]
-  [ "${lines[1]}" == "other~CoffeeShop~40~None~" ]
-  [ "${lines[2]}" == "other~Neighbor 5G~132~WPA2 Personal~-72" ]
-  [ "${#lines[@]}" == 3 ]
+  echo "$output" | jq -e 'length == 3' >/dev/null
+  echo "$output" | jq -e '.[0] | .section=="current" and .ssid=="HomeNet" and .channel==36 and .security=="WPA2 Personal" and .rssi==-45' >/dev/null
+  echo "$output" | jq -e '.[1] | .section=="other" and .ssid=="CoffeeShop" and .security=="None"' >/dev/null
 }
 
 @test "parseScanResults: ignore other interfaces" {
@@ -31,7 +30,7 @@ load variables
 }
 
 @test "getActiveScanSSID: read the current network name" {
-  run getActiveScanSSID "$SCAN" "en0"
+  run getActiveScanSSID "$(parseScanResults "$SCAN" en0)"
 
   [ "$status" -eq 0 ]
   [ "$output" == "HomeNet" ]
@@ -56,71 +55,42 @@ load variables
   [ "$output" == 4 ]
 }
 
-@test "getScanDetails: active network is marked with an icon" {
-  run getScanDetails "current~HomeNet~36~WPA2 Personal~-45" "HomeNet"
-  IFS='~' read -r -a ARRAY <<< "$output"
+# Build a network JSON object for getScanDetails
+netjson() { # section ssid channel security rssi
+  jq -nc --arg s "$1" --arg ssid "$2" --argjson ch "$3" --arg sec "$4" --argjson rssi "$5" \
+    '{section:$s, ssid:$ssid, channel:$ch, security:$sec, rssi:$rssi}'
+}
 
-  [ "${ARRAY[0]}" == $PRIORITY_HIGH ]
-  [ "${ARRAY[1]}" == "HomeNet" ]
-  [ "${ARRAY[3]}" == "-45" ]
-  [ "${ARRAY[4]}" == "36" ]
-  [ "${ARRAY[5]}" == "WPA2 Personal" ]
-  [ "${ARRAY[6]}" == $ICON_WIFI_ACTIVE ]
+@test "getScanDetails: current network is marked active" {
+  run getScanDetails "$(netjson current HomeNet 36 "WPA2 Personal" -45)"
+  echo "$output" | jq -e ".priority == $PRIORITY_HIGH and .ssid == \"HomeNet\" and .channel == 36 and .icon == \"$ICON_WIFI_ACTIVE\"" >/dev/null
 }
 
 @test "getScanDetails: open network uses a plain icon" {
-  run getScanDetails "other~CoffeeShop~40~None~"
-  IFS='~' read -r -a ARRAY <<< "$output"
-
-  [ "${ARRAY[1]}" == "CoffeeShop" ]
-  [ "${ARRAY[6]}" == $ICON_WIFI_4 ]
+  run getScanDetails "$(netjson other CoffeeShop 40 None -50)"
+  echo "$output" | jq -e ".ssid == \"CoffeeShop\" and .icon == \"$ICON_WIFI_4\"" >/dev/null
 }
 
 @test "getScanDetails: secured network uses a lock icon" {
-  run getScanDetails "other~Neighbor 5G~132~WPA2 Personal~-72"
-  IFS='~' read -r -a ARRAY <<< "$output"
-
-  [ "${ARRAY[0]}" == $PRIORITY_LOW ]
-  [ "${ARRAY[1]}" == "Neighbor 5G" ]
-  [ "${ARRAY[6]}" == $ICON_WIFI_LOCK_2 ]
+  run getScanDetails "$(netjson other "Neighbor 5G" 132 "WPA2 Personal" -72)"
+  echo "$output" | jq -e ".priority == $PRIORITY_LOW and .icon == \"$ICON_WIFI_LOCK_2\"" >/dev/null
 }
 
-@test "getScanDetails: redacted current network is active" {
-  run getScanDetails "current~<redacted>~6~None~" "<redacted>"
-  IFS='~' read -r -a ARRAY <<< "$output"
-
-  [ "${ARRAY[0]}" == $PRIORITY_HIGH ]
-  [ "${ARRAY[6]}" == $ICON_WIFI_ACTIVE ]
+@test "getScanDetails: only the current section is active" {
+  run getScanDetails "$(netjson other HomeNet 6 None -50)"
+  echo "$output" | jq -e ".priority == $PRIORITY_LOW" >/dev/null
 }
 
-@test "getScanDetails: redacted other network is not marked active" {
-  run getScanDetails "other~<redacted>~40~WPA2 Personal~" "<redacted>"
-  IFS='~' read -r -a ARRAY <<< "$output"
-
-  [ "${ARRAY[0]}" == $PRIORITY_LOW ]
-  [ "${ARRAY[6]}" == $ICON_WIFI_LOCK_4 ]
-}
-
-@test "getScanDetails: favorited network is marked with an icon" {
+@test "getScanDetails: favorited network is marked with a star" {
   AP_LIST="Neighbor 5G
   Random other AP"
 
-  run getScanDetails "other~Neighbor 5G~132~WPA2 Personal~-72" "" "$AP_LIST"
-  IFS='~' read -r -a ARRAY <<< "$output"
-
-  [ "${ARRAY[0]}" == $PRIORITY_MEDIUM ]
-  [ "${ARRAY[6]}" == $ICON_WIFI_STAR_2 ]
-}
-
-@test "getScanDetails: no BSSID from system_profiler" {
-  run getScanDetails "other~CoffeeShop~40~None~"
-  IFS='~' read -r -a ARRAY <<< "$output"
-
-  [ "${ARRAY[2]}" == "" ]
+  run getScanDetails "$(netjson other "Neighbor 5G" 132 "WPA2 Personal" -72)" "$AP_LIST"
+  echo "$output" | jq -e ".priority == $PRIORITY_MEDIUM and .icon == \"$ICON_WIFI_STAR_2\"" >/dev/null
 }
 
 @test "getScanDetails: filter empty SSIDs" {
-  run getScanDetails "other~~40~None~"
+  run getScanDetails "$(netjson other "" 40 None -50)"
   [ "$output" == "" ]
 }
 

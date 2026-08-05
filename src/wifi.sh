@@ -32,6 +32,30 @@ if [ "$(getWifiState "$INTERFACE")" == 0 ]; then
   return
 fi
 
+# Read the current network name via CoreWLAN, since ipconfig and system_profiler
+# redact it. The instant OS cache is enough almost always. Only when the current
+# network is not cached do a live scan (a few seconds), showing "Checking" while
+# it runs. The live scan also refreshes the cache for next time.
+# The scanner prefers a saved network when identifying the connected one.
+WIFI_SAVED=$(networksetup -listpreferredwirelessnetworks "$INTERFACE" 2>/dev/null)
+export WIFI_SAVED
+NETWORKS=$(scanNetworks "$INTERFACE" cached)
+SSID=$(getActiveScanSSID "$NETWORKS")
+
+if [ -z "$SSID" ] && [ -z "$wifi_checking" ]; then
+  addResult "" "" "Checking Wi-Fi…" "Reading the current network name" "$ICON_WIFI" "no"
+  setRerun 0.1
+  addVariable wifi_checking 1
+  getJSONResults
+  return
+fi
+
+if [ -n "$wifi_checking" ]; then
+  NETWORKS=$(scanNetworks "$INTERFACE")
+  SSID=$(getActiveScanSSID "$NETWORKS")
+fi
+AUTH=$(jq -r 'map(select(.section == "current"))[0].security // ""' <<< "$NETWORKS")
+
 # Get network configuration
 NETINFO=$(networksetup -getinfo "$NAME")
 NETCONFIG=$(getConnectionConfig "$NETINFO")
@@ -48,23 +72,12 @@ if [ "$IPv6" != "" ]; then
   addResult "" "$IPv6" "$IPv6" "IPv6 address ($NETCONFIG)" "$ICON_WIFI"
 fi
 
-# Output WiFi AP info
-SUMMARY=$(ipconfig getsummary "$INTERFACE" 2>/dev/null)
-SSID=$(getSummaryValue "$SUMMARY" "SSID")
-BSSID=$(getSummaryValue "$SUMMARY" "BSSID")
-AUTH=$(getSummaryValue "$SUMMARY" "Security")
-
-# Use BSSID with SSID as fallback
-SSID_NAME="$SSID ($BSSID)"
-if [ "$BSSID" == "" ] || [ "$BSSID" == "<redacted>" ]; then
-  SSID_NAME="$SSID"
-fi
-
-if [ "$SSID" == "<redacted>" ]; then
+# Output the Wi-Fi network name (read from the scan above)
+if [ "$SSID" != "" ] && [ "$SSID" != "<redacted>" ]; then
+  addResult "" "$SSID" "$SSID" "$NAME access point ($AUTH)" "$ICON_WIFI"
+else
   # macOS hides the name unless the app reading Wi-Fi has Location access
   addResult "" "LOCATION" "Wi-Fi name hidden by macOS" "Press ⏎ to open Location Services, then enable it for Alfred" "$ICON_WIFI_ERROR"
-elif [ "$SSID" != "" ]; then
-  addResult "" "$SSID" "$SSID_NAME" "$NAME access point ($AUTH)" "$ICON_WIFI"
 fi
 
 # Output global IP

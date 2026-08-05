@@ -41,54 +41,54 @@ if [ -z "$ap_scanning" ]; then
   exit
 fi
 
-# airport was removed in macOS 14.4, so scan with system_profiler
-SCAN=$(system_profiler SPAirPortDataType 2>/dev/null)
+# Scan with the CoreWLAN helper (real names) or system_profiler (redacted).
+# NETWORKS is a JSON array of { section, ssid, channel, security, rssi }.
+# Export the saved networks so the scanner can pick the connected one.
 SAVED_APS=$(networksetup -listpreferredwirelessnetworks "$INTERFACE")
+export WIFI_SAVED="$SAVED_APS"
+NETWORKS=$(scanNetworks "$INTERFACE")
 
-ACTIVE_ID=$(getActiveScanSSID "$SCAN" "$INTERFACE")
-NETWORKS=$(parseScanResults "$SCAN" "$INTERFACE")
-
-if [ "$NETWORKS" == "" ]; then
+if [ "$(jq 'length' <<< "$NETWORKS")" == "0" ]; then
   # Handle no wifi access points found
   addResult "" "Null" "No access points found" "" "$ICON_WIFI_ERROR"
 else
   # macOS hides network names unless the app reading Wi-Fi has Location
   # access. Channel, security and signal still show for each network.
-  if echo "$NETWORKS" | grep -q '<redacted>'; then
+  if jq -e 'any(.[]; .ssid == "<redacted>")' >/dev/null <<< "$NETWORKS"; then
     addResult "" "LOCATION" "Wi-Fi names hidden by macOS" \
       "Press ⏎ to open Location Services, then enable it for Alfred" "$ICON_WIFI_ERROR"
   fi
 
-  PARSED_APS=''
+  # Annotate each network with a priority and icon, then sort by priority
+  ANNOTATED=$(
+    while IFS= read -r NET; do
+      getScanDetails "$NET" "$SAVED_APS"
+    done <<< "$(jq -c '.[]' <<< "$NETWORKS")" | jq -sc 'sort_by(.priority)'
+  )
 
-  # Build details from each scan tuple
-  while read -r LINE; do
-    PARSED_APS+=$(getScanDetails "$LINE" "$ACTIVE_ID" "$SAVED_APS")$'\n'
-  done <<< "$NETWORKS"
+  while IFS= read -r ITEM; do
+    [ -z "$ITEM" ] && continue
+    SSID=$(jq -r '.ssid' <<< "$ITEM")
+    CHANNEL=$(jq -r '.channel' <<< "$ITEM")
+    SECURITY=$(jq -r '.security' <<< "$ITEM")
+    RSSI=$(jq -r '.rssi' <<< "$ITEM")
+    ICON=$(jq -r '.icon' <<< "$ITEM")
 
-  # Sort by priority and name, drop duplicates
-  PARSED_APS=$(echo "$PARSED_APS" | sort -u)
-
-  # Create workflow results from each line
-  while read -r LINE; do
-    IFS='~' read -r -a ARRAY <<< "$LINE"
-
-    if [ "${ARRAY[0]}" != "" ]; then
-      SUBTITLE="channel ${ARRAY[4]}"
-      if [ "${ARRAY[3]}" != "" ]; then
-        SUBTITLE="RSSI ${ARRAY[3]} dBm, $SUBTITLE"
-      fi
-      if [ "${ARRAY[5]}" != "" ]; then
-        SUBTITLE="$SUBTITLE, ${ARRAY[5]}"
-      fi
-      if [ "${ARRAY[1]}" == "<redacted>" ]; then
-        # No usable name to connect with, so make it a non-actionable row
-        addResult "" "" "Hidden network" "$SUBTITLE" "${ARRAY[6]}" "no"
-      else
-        addResult "" "${ARRAY[1]}" "${ARRAY[1]}" "$SUBTITLE" "${ARRAY[6]}"
-      fi
+    SUBTITLE="channel $CHANNEL"
+    if [ "$RSSI" != "0" ]; then
+      SUBTITLE="RSSI $RSSI dBm, $SUBTITLE"
     fi
-  done <<< "$PARSED_APS"
+    if [ "$SECURITY" != "" ]; then
+      SUBTITLE="$SUBTITLE, $SECURITY"
+    fi
+
+    if [ "$SSID" == "<redacted>" ]; then
+      # No usable name to connect with, so make it a non-actionable row
+      addResult "" "" "Hidden network" "$SUBTITLE" "$ICON" "no"
+    else
+      addResult "" "$SSID" "$SSID" "$SUBTITLE" "$ICON"
+    fi
+  done <<< "$(jq -c '.[]' <<< "$ANNOTATED")"
 fi
 
 getJSONResults

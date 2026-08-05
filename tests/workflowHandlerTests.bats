@@ -39,6 +39,20 @@ setup() {
   [[ "$output" =~ '"title":"back\\slash"' ]]
 }
 
+@test "addResult: ARG_PREFIX prefixes a non-empty arg" {
+  ARG_PREFIX="wifi "
+  addResult "" "Off" "Turn Off" "" "i.png"
+  run getJSONResults
+  [[ "$output" =~ '"arg":"wifi Off"' ]]
+}
+
+@test "addResult: ARG_PREFIX leaves an empty arg empty" {
+  ARG_PREFIX="wifi "
+  addResult "" "" "Info" "row" "i.png" "no"
+  run getJSONResults
+  [[ "$output" =~ '"arg":""' ]]
+}
+
 @test "addResult: omits uid when empty and marks invalid" {
   addResult "" "" "Info" "row" "i.png" "no" ""
   run getJSONResults

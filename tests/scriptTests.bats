@@ -10,15 +10,102 @@ setup() {
   export alfred_workflow_data="$BATS_TEST_TMPDIR/data"
 }
 
+# --- net.sh (router) -------------------------------------------------------
+
+@test "net.sh: catalog lists every command" {
+  run bash -c '. src/net.sh list ""'
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ '"autocomplete":"wifi ' ]]
+  [[ "$output" =~ '"autocomplete":"vpn ' ]]
+  [[ "$output" =~ '"autocomplete":"update ' ]]
+}
+
+@test "net.sh: catalog filters by subcommand prefix" {
+  run bash -c '. src/net.sh list "v"'
+  [[ "$output" =~ "VPN" ]]
+  [[ ! "$output" =~ "Wi-Fi" ]]
+}
+
+@test "net.sh: dispatches a subcommand and prefixes item args" {
+  run bash -c '. src/net.sh list "vpn"'
+  [[ "$output" =~ "Test-VPN" ]]
+  [[ "$output" =~ '"arg":"vpn Test-VPN"' ]]
+}
+
+@test "net.sh: run dispatches the action to the subcommand" {
+  export MOCK_VPN_STATUS=Connected
+  run bash -c '. src/net.sh run "vpn Test-VPN"'
+  [ "$status" -eq 0 ]
+}
+
+@test "net.sh: list wifi prefixes item args" {
+  export MOCK_HELPER=names
+  run bash -c '. src/net.sh list "wifi"'
+  [[ "$output" =~ '"arg":"wifi Off"' ]]
+}
+
+@test "net.sh: run a wifi action toggles power" {
+  run bash -c '. src/net.sh run "wifi Off"'
+  [ "$status" -eq 0 ]
+}
+
+@test "net.sh: list dns prefixes preset args" {
+  run bash -c '. src/net.sh list "dns"'
+  [[ "$output" =~ "Google DNS" ]]
+  [[ "$output" =~ '"arg":"dns ' ]]
+}
+
+@test "net.sh: list update dispatches to the updater" {
+  cat > src/update.sh <<'STUB'
+#!/bin/bash
+echo "updater list [$1]"
+STUB
+  run bash -c '. src/net.sh list "update"'
+  rm -f src/update.sh
+  [[ "$output" =~ "updater list []" ]]
+}
+
+@test "net.sh: run a download url dispatches to the updater" {
+  cat > src/update.sh <<'STUB'
+#!/bin/bash
+echo "updater run [$1]"
+STUB
+  run bash -c '. src/net.sh run "https://example.com/W.alfredworkflow"'
+  rm -f src/update.sh
+  [[ "$output" =~ "updater run [https://example.com/W.alfredworkflow]" ]]
+}
+
+# --- scanNetworks (CoreWLAN helper) ----------------------------------------
+
+@test "scanNetworks: uses the helper json when authorized" {
+  export MOCK_HELPER=names
+  run bash -c '. src/helpers.sh; scanNetworks en0'
+  echo "$output" | jq -e 'map(select(.section=="current"))[0].ssid == "HomeNet"' >/dev/null
+  echo "$output" | jq -e 'any(.[]; .ssid == "CoffeeShop")' >/dev/null
+}
+
+@test "scanNetworks: falls back to system_profiler json when the helper is empty" {
+  run bash -c '. src/helpers.sh; scanNetworks en0'
+  echo "$output" | jq -e 'any(.[]; .ssid == "HomeNet")' >/dev/null
+}
+
 # --- wifi.sh ---------------------------------------------------------------
 
 @test "wifi.sh: show connected info" {
+  export MOCK_HELPER=names
   run bash -c '. src/wifi.sh'
   [ "$status" -eq 0 ]
   [[ "$output" =~ "192.168.1.100" ]]
   [[ "$output" =~ "HomeNet" ]]
   [[ "$output" =~ "203.0.113.5" ]]
   [[ "$output" =~ "Turn Wi-Fi Off" ]]
+}
+
+@test "wifi.sh: empty cache shows a checking placeholder" {
+  # With no cached scan the first pass shows a placeholder and reruns
+  run bash -c '. src/wifi.sh'
+  [[ "$output" =~ "Checking Wi-Fi" ]]
+  [[ "$output" =~ '"rerun"' ]]
 }
 
 @test "wifi.sh: wifi off shows turn on" {
@@ -37,8 +124,15 @@ setup() {
   [ "$output" == "10.0.0.1" ]
 }
 
+@test "wifi.sh: shows the current network name from the helper" {
+  export MOCK_HELPER=names
+  run bash -c '. src/wifi.sh'
+  [[ "$output" =~ "HomeNet" ]]
+}
+
 @test "wifi.sh: redacted ssid shows an actionable hint" {
-  export MOCK_IP=redacted
+  export MOCK_SPA=redacted
+  export wifi_checking=1   # skip the cache placeholder, go to the live scan
   run bash -c '. src/wifi.sh'
   [[ "$output" =~ "hidden by macOS" ]]
   [[ "$output" =~ '"arg":"LOCATION"' ]]
@@ -52,6 +146,7 @@ setup() {
 
 @test "wifi.sh: shows IPv6 when present" {
   export MOCK_IPV6=yes
+  export MOCK_HELPER=names
   run bash -c '. src/wifi.sh'
   [[ "$output" =~ "fe80::abcd" ]]
 }
@@ -103,6 +198,15 @@ setup() {
   [ "$status" -eq 0 ]
   [[ "$output" =~ "HomeNet" ]]
   [[ "$output" =~ "CoffeeShop" ]]
+}
+
+@test "ap.sh: uses CoreWLAN helper names when available" {
+  export ap_scanning=1
+  export MOCK_HELPER=names
+  run bash -c '. src/ap.sh'
+  [[ "$output" =~ "HomeNet" ]]
+  [[ ! "$output" =~ "hidden by macOS" ]]
+  [[ ! "$output" =~ "Hidden network" ]]
 }
 
 @test "ap.sh: connect action reads keychain" {

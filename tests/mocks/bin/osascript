@@ -1,0 +1,6 @@
+#!/bin/bash
+# Mock osascript. MOCK_HELPER=names emits the scanner's JSON; else nothing.
+if [ "$MOCK_HELPER" == "names" ]; then
+  printf '[{"section":"current","ssid":"HomeNet","channel":36,"security":"WPA2 Personal","rssi":-45},{"section":"other","ssid":"CoffeeShop","channel":40,"security":"None","rssi":-60}]'
+fi
+exit 0
