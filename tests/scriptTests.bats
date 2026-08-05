@@ -41,6 +41,13 @@ setup() {
   export MOCK_IP=redacted
   run bash -c '. src/wifi.sh'
   [[ "$output" =~ "Grant Location access" ]]
+  [[ "$output" =~ '"arg":"LOCATION"' ]]
+}
+
+@test "wifi.sh: location action opens settings" {
+  run bash -c '. src/wifi.sh LOCATION'
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "Privacy_LocationServices" ]]
 }
 
 @test "wifi.sh: shows IPv6 when present" {
@@ -114,6 +121,13 @@ setup() {
   export MOCK_SPA=redacted
   run bash -c '. src/ap.sh'
   [[ "$output" =~ "Grant Location access" ]]
+  [[ "$output" =~ '"arg":"LOCATION"' ]]
+}
+
+@test "ap.sh: location action opens settings" {
+  run bash -c '. src/ap.sh LOCATION'
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "Privacy_LocationServices" ]]
 }
 
 @test "ap.sh: no networks found" {

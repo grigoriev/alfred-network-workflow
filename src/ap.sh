@@ -9,6 +9,11 @@ if [ "$1" != "" ]; then
     exit
   fi
 
+  if [ "$1" == "LOCATION" ]; then
+    openLocationSettings
+    exit
+  fi
+
   # Extract password for AP, which is needed by networksetup.
   # security prints the password to stderr, so send stderr down the pipe
   # and discard stdout. The redirect order is intentional.
@@ -48,8 +53,8 @@ if [ "$NETWORKS" == "" ]; then
   addResult "" "Null" "No access points found" "" "$ICON_WIFI_ERROR"
 elif [ "$(echo "$NETWORKS" | grep -vc '<redacted>')" == "0" ]; then
   # macOS hides network names until the workflow is granted Location access
-  addResult "" "Null" "Grant Location access to see Wi-Fi names" \
-    "System Settings > Privacy & Security > Location Services > System Services" "$ICON_WIFI_ERROR"
+  addResult "" "LOCATION" "Grant Location access to see Wi-Fi names" \
+    "Press ⏎ to open Location Services settings" "$ICON_WIFI_ERROR"
 else
   PARSED_APS=''
 
