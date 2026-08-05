@@ -7,6 +7,8 @@
 if [ "$1" != "" ]; then
   if [ "$1" == "On" ] || [ "$1" == "Off" ]; then
   	networksetup -setairportpower "$INTERFACE" "$1"
+  elif [ "$1" == "LOCATION" ]; then
+    openLocationSettings
   else
     echo "$1" | tr -d '\n'
   fi
@@ -60,7 +62,7 @@ fi
 
 if [ "$SSID" == "<redacted>" ]; then
   # macOS hides the name unless the app reading Wi-Fi has Location access
-  addResult "" "" "Wi-Fi name hidden by macOS" "Enable Location access for Alfred to reveal it" "$ICON_WIFI_ERROR" "no"
+  addResult "" "LOCATION" "Wi-Fi name hidden by macOS" "Press ⏎ to open Location Services, then enable it for Alfred" "$ICON_WIFI_ERROR"
 elif [ "$SSID" != "" ]; then
   addResult "" "$SSID" "$SSID_NAME" "$NAME access point ($AUTH)" "$ICON_WIFI"
 fi

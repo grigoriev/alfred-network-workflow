@@ -330,7 +330,9 @@ getScanDetails() {
   local PRIORITY=$PRIORITY_LOW
   local AP_ICON
 
-  if [ "$SECTION" == "current" ] || { [ "$2" != "" ] && [ "$SSID" == "$2" ]; }; then
+  # A redacted SSID cannot be matched by name, so only the current network
+  # section identifies the active one; otherwise all redacted rows would match.
+  if [ "$SECTION" == "current" ] || { [ "$SSID" != "<redacted>" ] && [ "$2" != "" ] && [ "$SSID" == "$2" ]; }; then
     AP_ICON=$ICON_WIFI_ACTIVE_
     PRIORITY=$PRIORITY_HIGH
   elif [ "$FAVORITED" != "" ]; then
@@ -345,4 +347,9 @@ getScanDetails() {
   AP_ICON=$AP_ICON$(getScanStrength "$RSSI")$ICON_END
 
   echo "$PRIORITY"~"$SSID"~""~"$RSSI"~"$CHANNEL"~"$SECURITY"~"$AP_ICON"
+}
+
+# Open the macOS Location Services settings pane
+openLocationSettings() {
+  open "x-apple.systempreferences:com.apple.preference.security?Privacy_LocationServices"
 }

@@ -9,6 +9,11 @@ if [ "$1" != "" ]; then
     exit
   fi
 
+  if [ "$1" == "LOCATION" ]; then
+    openLocationSettings
+    exit
+  fi
+
   # Extract password for AP, which is needed by networksetup.
   # security prints the password to stderr, so send stderr down the pipe
   # and discard stdout. The redirect order is intentional.
@@ -50,8 +55,8 @@ else
   # macOS hides network names unless the app reading Wi-Fi has Location
   # access. Channel, security and signal still show for each network.
   if echo "$NETWORKS" | grep -q '<redacted>'; then
-    addResult "" "" "Wi-Fi names hidden by macOS" \
-      "Enable Location access for Alfred to reveal them" "$ICON_WIFI_ERROR" "no"
+    addResult "" "LOCATION" "Wi-Fi names hidden by macOS" \
+      "Press ⏎ to open Location Services, then enable it for Alfred" "$ICON_WIFI_ERROR"
   fi
 
   PARSED_APS=''
