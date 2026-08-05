@@ -1,0 +1,6 @@
+#!/bin/bash
+# Mock osascript. MOCK_HELPER=names emits SSIDs; otherwise nothing (fallback).
+if [ "$MOCK_HELPER" == "names" ]; then
+  printf 'current~HomeNet~36~WPA2 Personal~-45\nother~CoffeeShop~40~None~-60\n'
+fi
+exit 0

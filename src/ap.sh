@@ -41,12 +41,11 @@ if [ -z "$ap_scanning" ]; then
   exit
 fi
 
-# airport was removed in macOS 14.4, so scan with system_profiler
-SCAN=$(system_profiler SPAirPortDataType 2>/dev/null)
+# Scan with the CoreWLAN helper (real names) or system_profiler (redacted)
+NETWORKS=$(scanNetworks "$INTERFACE")
 SAVED_APS=$(networksetup -listpreferredwirelessnetworks "$INTERFACE")
 
-ACTIVE_ID=$(getActiveScanSSID "$SCAN" "$INTERFACE")
-NETWORKS=$(parseScanResults "$SCAN" "$INTERFACE")
+ACTIVE_ID=$(echo "$NETWORKS" | awk -F'~' '$1 == "current" { print $2; exit }')
 
 if [ "$NETWORKS" == "" ]; then
   # Handle no wifi access points found

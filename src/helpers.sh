@@ -312,6 +312,26 @@ getActiveScanSSID() {
   parseScanResults "$1" "$2" | awk -F'~' '$1 == "current" { print $2; exit }'
 }
 
+# Scan Wi-Fi networks. Reads real SSIDs with CoreWLAN through osascript, whose
+# Apple-signed context is allowed to on macOS 14+ (no prompt or signing needed).
+# Falls back to system_profiler (redacted names) if that returns nothing.
+# $1 = Wi-Fi interface name
+# $! = SECTION~SSID~CHANNEL~SECURITY~RSSI lines
+scanNetworks() {
+  local SRC="src/wifi-scan.js"
+
+  if [ -f "$SRC" ]; then
+    local OUT
+    OUT=$(osascript -l JavaScript "$SRC" 2>/dev/null)
+    if [ -n "$OUT" ]; then
+      echo "$OUT"
+      return
+    fi
+  fi
+
+  parseScanResults "$(system_profiler SPAirPortDataType 2>/dev/null)" "$1"
+}
+
 # Build access point details from a scan tuple
 # $1 = SECTION~SSID~CHANNEL~SECURITY~RSSI (from parseScanResults)
 # $2 = SSID of the active access point (optional)

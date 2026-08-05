@@ -38,6 +38,56 @@ setup() {
   [ "$status" -eq 0 ]
 }
 
+@test "net.sh: list wifi prefixes item args" {
+  run bash -c '. src/net.sh list "wifi"'
+  [[ "$output" =~ '"arg":"wifi Off"' ]]
+}
+
+@test "net.sh: run a wifi action toggles power" {
+  run bash -c '. src/net.sh run "wifi Off"'
+  [ "$status" -eq 0 ]
+}
+
+@test "net.sh: list dns prefixes preset args" {
+  run bash -c '. src/net.sh list "dns"'
+  [[ "$output" =~ "Google DNS" ]]
+  [[ "$output" =~ '"arg":"dns ' ]]
+}
+
+@test "net.sh: list update dispatches to the updater" {
+  cat > src/update.sh <<'STUB'
+#!/bin/bash
+echo "updater list [$1]"
+STUB
+  run bash -c '. src/net.sh list "update"'
+  rm -f src/update.sh
+  [[ "$output" =~ "updater list []" ]]
+}
+
+@test "net.sh: run a download url dispatches to the updater" {
+  cat > src/update.sh <<'STUB'
+#!/bin/bash
+echo "updater run [$1]"
+STUB
+  run bash -c '. src/net.sh run "https://example.com/W.alfredworkflow"'
+  rm -f src/update.sh
+  [[ "$output" =~ "updater run [https://example.com/W.alfredworkflow]" ]]
+}
+
+# --- scanNetworks (CoreWLAN helper) ----------------------------------------
+
+@test "scanNetworks: uses the helper output when authorized" {
+  export MOCK_HELPER=names
+  run bash -c '. src/helpers.sh; scanNetworks en0'
+  [[ "$output" =~ "current~HomeNet~36~WPA2 Personal~-45" ]]
+  [[ "$output" =~ "other~CoffeeShop" ]]
+}
+
+@test "scanNetworks: falls back to system_profiler when the helper is empty" {
+  run bash -c '. src/helpers.sh; scanNetworks en0'
+  [[ "$output" =~ "HomeNet" ]]
+}
+
 # --- wifi.sh ---------------------------------------------------------------
 
 @test "wifi.sh: show connected info" {
@@ -131,6 +181,15 @@ setup() {
   [ "$status" -eq 0 ]
   [[ "$output" =~ "HomeNet" ]]
   [[ "$output" =~ "CoffeeShop" ]]
+}
+
+@test "ap.sh: uses CoreWLAN helper names when available" {
+  export ap_scanning=1
+  export MOCK_HELPER=names
+  run bash -c '. src/ap.sh'
+  [[ "$output" =~ "HomeNet" ]]
+  [[ ! "$output" =~ "hidden by macOS" ]]
+  [[ ! "$output" =~ "Hidden network" ]]
 }
 
 @test "ap.sh: connect action reads keychain" {
