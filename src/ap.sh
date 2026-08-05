@@ -19,6 +19,13 @@ if [ "$1" != "" ]; then
   exit
 fi
 
+# Guard against a Mac without Wi-Fi hardware
+if [ -z "$INTERFACE" ]; then
+  addResult "" "" "No Wi-Fi interface found" "This Mac has no Wi-Fi hardware" "$ICON_WIFI_ERROR" "no"
+  getJSONResults
+  exit
+fi
+
 # The scan takes a few seconds. On the first pass show a placeholder and
 # ask Alfred to re-run, so the scan runs while "Scanning" is on screen.
 if [ -z "$ap_scanning" ]; then

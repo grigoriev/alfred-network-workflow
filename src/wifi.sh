@@ -13,6 +13,13 @@ if [ "$1" != "" ]; then
   exit
 fi
 
+# Guard against a Mac without Wi-Fi hardware
+if [ -z "$INTERFACE" ]; then
+  addResult "" "" "No Wi-Fi interface found" "This Mac has no Wi-Fi hardware" "$ICON_WIFI_ERROR" "no"
+  getJSONResults
+  return
+fi
+
 # Get interface mac address
 MAC=$(getWifiMac)
 

@@ -2,10 +2,12 @@
 # Mock of networksetup. Toggle behavior with MOCK_* env vars.
 case "$1" in
   -listallhardwareports)
-    echo "Hardware Port: Wi-Fi"
-    echo "Device: en0"
-    echo "Ethernet Address: f8:06:c1:00:a3:cc"
-    echo ""
+    if [ "$MOCK_WIFI" != "none" ]; then
+      echo "Hardware Port: Wi-Fi"
+      echo "Device: en0"
+      echo "Ethernet Address: f8:06:c1:00:a3:cc"
+      echo ""
+    fi
     if [ "$MOCK_ETH" != "none" ]; then
       echo "Hardware Port: Thunderbolt Ethernet"
       echo "Device: en4"

@@ -49,6 +49,12 @@ setup() {
   [[ "$output" =~ "fe80::abcd" ]]
 }
 
+@test "wifi.sh: no wifi hardware" {
+  export MOCK_WIFI=none
+  run bash -c '. src/wifi.sh'
+  [[ "$output" =~ "No Wi-Fi interface found" ]]
+}
+
 # --- ethernet.sh -----------------------------------------------------------
 
 @test "ethernet.sh: show connected info" {
@@ -115,6 +121,13 @@ setup() {
   export MOCK_SPA=empty
   run bash -c '. src/ap.sh'
   [[ "$output" =~ "No access points found" ]]
+}
+
+@test "ap.sh: no wifi hardware" {
+  export MOCK_WIFI=none
+  run bash -c '. src/ap.sh'
+  [[ "$output" =~ "No Wi-Fi interface found" ]]
+  [[ ! "$output" =~ "Scanning" ]]
 }
 
 # --- vpn.sh ----------------------------------------------------------------
