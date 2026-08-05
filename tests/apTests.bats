@@ -85,6 +85,22 @@ load variables
   [ "${ARRAY[6]}" == $ICON_WIFI_LOCK_2 ]
 }
 
+@test "getScanDetails: redacted current network is active" {
+  run getScanDetails "current~<redacted>~6~None~" "<redacted>"
+  IFS='~' read -r -a ARRAY <<< "$output"
+
+  [ "${ARRAY[0]}" == $PRIORITY_HIGH ]
+  [ "${ARRAY[6]}" == $ICON_WIFI_ACTIVE ]
+}
+
+@test "getScanDetails: redacted other network is not marked active" {
+  run getScanDetails "other~<redacted>~40~WPA2 Personal~" "<redacted>"
+  IFS='~' read -r -a ARRAY <<< "$output"
+
+  [ "${ARRAY[0]}" == $PRIORITY_LOW ]
+  [ "${ARRAY[6]}" == $ICON_WIFI_LOCK_4 ]
+}
+
 @test "getScanDetails: favorited network is marked with an icon" {
   AP_LIST="Neighbor 5G
   Random other AP"
