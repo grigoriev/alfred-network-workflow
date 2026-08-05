@@ -596,7 +596,7 @@
 				<key>escaping</key>
 				<integer>102</integer>
 				<key>keyword</key>
-				<string>anw</string>
+				<string>net</string>
 				<key>queuedelaycustom</key>
 				<integer>3</integer>
 				<key>queuedelayimmediatelyinitially</key>
@@ -608,7 +608,7 @@
 				<key>runningsubtext</key>
 				<string></string>
 				<key>script</key>
-				<string>. src/anw.sh</string>
+				<string>. src/net.sh</string>
 				<key>scriptargtype</key>
 				<integer>0</integer>
 				<key>scriptfile</key>

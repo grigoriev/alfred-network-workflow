@@ -1,6 +1,6 @@
 WORKFLOW    := Network.alfredworkflow
 UPDATER_URL := https://github.com/grigoriev/alfred-workflow-updater/releases/latest/download/update.sh
-SCRIPTS     := src/wifi.sh src/ethernet.sh src/ap.sh src/dns.sh src/vpn.sh src/anw.sh
+SCRIPTS     := src/wifi.sh src/ethernet.sh src/ap.sh src/dns.sh src/vpn.sh src/net.sh
 EXCLUDES    := '.git/*' '.github/*' '.gitignore' 'Makefile' '$(WORKFLOW)'
 
 .PHONY: all build updater verify-updater test lint clean

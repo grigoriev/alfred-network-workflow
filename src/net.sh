@@ -4,7 +4,7 @@
 . src/media.sh
 
 # Hub menu: list every command. Selecting one autocompletes to its keyword
-# (press Tab), so "anw" is a single entry point that discovers everything.
+# (press Tab), so "net" is a single entry point that discovers everything.
 # addResult args: uid arg title subtitle icon valid autocomplete
 
 addResult "" "" "Wi-Fi" "Show Wi-Fi info and toggle it on or off" "$ICON_WIFI" "no" "wifi "
