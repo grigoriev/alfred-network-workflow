@@ -61,6 +61,21 @@ setup() {
   [ "$output" == "" ]
 }
 
+@test "getPref: key is not matched as a substring" {
+  setPref "dns" "1.1.1.1" 1
+  setPref "dns2" "9.9.9.9" 1
+  run getPref "dns" 1
+  [ "$output" == "1.1.1.1" ]
+}
+
+@test "setPref: overwrite does not remove a similar key" {
+  setPref "dns" "1.1.1.1" 1
+  setPref "dns2" "9.9.9.9" 1
+  setPref "dns" "8.8.8.8" 1
+  run getPref "dns2" 1
+  [ "$output" == "9.9.9.9" ]
+}
+
 @test "getWifiStrength: level from RSSI" {
   run getWifiStrength "-45"
   [ "$output" == 4 ]

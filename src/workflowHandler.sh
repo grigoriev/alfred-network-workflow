@@ -71,9 +71,9 @@ setPref() {
     touch "$PREFFILE"
   fi
 
-  local KEY_EXISTS=$(grep -c "$1=" "$PREFFILE")
-  if [ "$KEY_EXISTS" = "1" ]; then
-    local TMP=$(grep -ve "^$1" "$PREFFILE")
+  local KEY_EXISTS=$(grep -c "^$1=" "$PREFFILE")
+  if [ "$KEY_EXISTS" != "0" ]; then
+    local TMP=$(grep -ve "^$1=" "$PREFFILE")
     echo "$TMP" > "$PREFFILE"
   fi
   echo "$1=$2" >> "$PREFFILE"
@@ -107,6 +107,6 @@ getPref() {
     return
   fi
 
-  local VALUE=$(sed "/^\#/d" "$PREFFILE" | grep "$1"  | tail -n 1 | cut -d "=" -f2-)
+  local VALUE=$(sed "/^\#/d" "$PREFFILE" | grep "^$1=" | tail -n 1 | cut -d "=" -f2-)
   echo "$VALUE"
 }
