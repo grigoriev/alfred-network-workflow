@@ -61,4 +61,4 @@ else
   done <<< "$PARSED_APS"
 fi
 
-getXMLResults
+getJSONResults

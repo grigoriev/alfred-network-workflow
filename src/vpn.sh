@@ -26,4 +26,4 @@ while read -r LINE; do
   addResult "" "${ARRAY[1]}" "${ARRAY[1]}" "${ARRAY[2]} (${ARRAY[0]})" "${ARRAY[3]}"
 done <<< "$(echo "$(scutil --nc list)" | awk 'NR>1')"
 
-getXMLResults
+getJSONResults

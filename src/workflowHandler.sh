@@ -10,36 +10,58 @@ RESULTS=()
 # $3 title
 # $4 subtitle
 # $5 icon
-# $6 valid
+# $6 valid (pass "no" for a non-actionable item; anything else is valid)
 # $7 autocomplete
 ###############################################################################
 addResult() {
-  RESULT="<item uid='$(xmlEncode "$1")' arg='$(xmlEncode "$2")' valid='$6' autocomplete='$7'><title>$(xmlEncode "$3")</title><subtitle>$(xmlEncode "$4")</subtitle><icon>$(xmlEncode "$5")</icon></item>"
-  RESULTS+=("$RESULT")
+  local ITEM="{"
+  if [ -n "$1" ]; then
+    ITEM+="\"uid\":\"$(jsonEncode "$1")\","
+  fi
+  ITEM+="\"title\":\"$(jsonEncode "$3")\","
+  ITEM+="\"subtitle\":\"$(jsonEncode "$4")\","
+  ITEM+="\"arg\":\"$(jsonEncode "$2")\","
+  ITEM+="\"icon\":{\"path\":\"$(jsonEncode "$5")\"},"
+  if [ "$6" = "no" ]; then
+    ITEM+="\"valid\":false,"
+  else
+    ITEM+="\"valid\":true,"
+  fi
+  if [ -n "$7" ]; then
+    ITEM+="\"autocomplete\":\"$(jsonEncode "$7")\","
+  fi
+  ITEM="${ITEM%,}}"
+  RESULTS+=("$ITEM")
 }
 
 ###############################################################################
-# Prints the feedback xml to stdout
+# Prints the feedback json to stdout (Alfred Script Filter format)
 ###############################################################################
-getXMLResults() {
-  echo "<?xml version='1.0'?><items>"
-
-#  if [ "${#string[@]}" = "0" ]; then
-#    echo "<item uid='oftask' arg='-' valid='no'><title>No results found</title><subtitle>Please try another search term</subtitle><icon></icon></item>"
-#  fi
-
-  for R in ${RESULTS[*]}; do
-    echo "$R" | tr "\n" " "
+getJSONResults() {
+  local OUT="{\"items\":["
+  local I=0
+  for R in "${RESULTS[@]}"; do
+    if [ "$I" -gt 0 ]; then
+      OUT+=","
+    fi
+    OUT+="$R"
+    I=$((I + 1))
   done
-
-  echo "</items>"
+  OUT+="]}"
+  printf '%s\n' "$OUT"
 }
 
 ###############################################################################
-# Escapes XML special characters with their entities
+# Escapes a string for embedding in a JSON string literal
 ###############################################################################
-xmlEncode() {
-  echo "$1" | sed -e 's/&/\&amp;/g' -e 's/>/\&gt;/g' -e 's/</\&lt;/g' -e "s/'/\&apos;/g" -e 's/"/\&quot;/g'
+jsonEncode() {
+  local S="$1"
+  S="${S//\\/\\\\}"
+  S="${S//\"/\\\"}"
+  S="${S//$'\n'/\\n}"
+  S="${S//$'\t'/\\t}"
+  S="${S//$'\r'/\\r}"
+  printf '%s' "$S"
 }
 
 ###############################################################################

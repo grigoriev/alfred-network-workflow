@@ -47,4 +47,4 @@ else
   addResult "" "DEFAULT" "Default DNS" "Default" "$ICON_DNS"
 fi
 
-getXMLResults
+getJSONResults

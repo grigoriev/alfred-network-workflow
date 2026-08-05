@@ -8,33 +8,47 @@ setup() {
   export alfred_workflow_data="$BATS_TEST_TMPDIR/data"
 }
 
-@test "xmlEncode: escape special characters" {
-  run xmlEncode "a&b<c>d'e\"f"
-  [ "$output" == "a&amp;b&lt;c&gt;d&apos;e&quot;f" ]
+@test "jsonEncode: escape quote and backslash" {
+  run jsonEncode 'a"b\c'
+  [ "$output" == 'a\"b\\c' ]
 }
 
-@test "xmlEncode: plain text is unchanged" {
-  run xmlEncode "Test-Network"
+@test "jsonEncode: plain text is unchanged" {
+  run jsonEncode "Test-Network"
   [ "$output" == "Test-Network" ]
 }
 
-@test "addResult and getXMLResults: build feedback xml" {
+@test "addResult and getJSONResults: build feedback json" {
   addResult "uid1" "arg1" "Title" "Subtitle" "icon.png" "yes" "auto"
-  run getXMLResults
+  run getJSONResults
 
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "<?xml version='1.0'?>" ]]
-  [[ "$output" =~ "<title>Title</title>" ]]
-  [[ "$output" =~ "<subtitle>Subtitle</subtitle>" ]]
-  [[ "$output" =~ "arg='arg1'" ]]
-  [[ "$output" =~ "uid='uid1'" ]]
+  [[ "$output" =~ '"items":[' ]]
+  [[ "$output" =~ '"title":"Title"' ]]
+  [[ "$output" =~ '"subtitle":"Subtitle"' ]]
+  [[ "$output" =~ '"arg":"arg1"' ]]
+  [[ "$output" =~ '"uid":"uid1"' ]]
+  [[ "$output" =~ '"icon":{"path":"icon.png"}' ]]
+  [[ "$output" =~ '"autocomplete":"auto"' ]]
 }
 
-@test "addResult: escapes xml in fields" {
-  addResult "" "R&D" "A & B" "" "" "" ""
-  run getXMLResults
-  [[ "$output" =~ "arg='R&amp;D'" ]]
-  [[ "$output" =~ "<title>A &amp; B</title>" ]]
+@test "addResult: escapes special characters in fields" {
+  addResult "" 'a"b' 'back\slash' "" "" "" ""
+  run getJSONResults
+  [[ "$output" =~ '"arg":"a\"b"' ]]
+  [[ "$output" =~ '"title":"back\\slash"' ]]
+}
+
+@test "addResult: omits uid when empty and marks invalid" {
+  addResult "" "" "Info" "row" "i.png" "no" ""
+  run getJSONResults
+  [[ ! "$output" =~ '"uid"' ]]
+  [[ "$output" =~ '"valid":false' ]]
+}
+
+@test "getJSONResults: empty result set is valid json" {
+  run getJSONResults
+  [ "$output" == '{"items":[]}' ]
 }
 
 @test "setPref and getPref: store and read a value" {
