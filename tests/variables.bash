@@ -99,3 +99,43 @@ SAVED_APS="	Test-Network
 AP_LIST="foo
   bar baz
   qux"
+
+SCAN='Wi-Fi:
+
+      Interfaces:
+        en0:
+          Status: Connected
+          Current Network Information:
+            HomeNet:
+              PHY Mode: 802.11ax
+              Channel: 36 (5GHz, 80MHz)
+              Security: WPA2 Personal
+              Signal / Noise: -45 dBm / -90 dBm
+          Other Local Wi-Fi Networks:
+            CoffeeShop:
+              PHY Mode: 802.11ac
+              Channel: 40 (5GHz, 40MHz)
+              Security: None
+            Neighbor 5G:
+              PHY Mode: 802.11ac
+              Channel: 132 (5GHz, 40MHz)
+              Security: WPA2 Personal
+              Signal / Noise: -72 dBm / -95 dBm
+        awdl0:
+          Current Network Information:
+              Network Type: Infrastructure'
+
+SCAN_REDACTED='Wi-Fi:
+
+      Interfaces:
+        en0:
+          Current Network Information:
+            <redacted>:
+              PHY Mode: 802.11n
+              Channel: 6 (2GHz, 20MHz)
+              Security: None
+          Other Local Wi-Fi Networks:
+            <redacted>:
+              PHY Mode: 802.11ac
+              Channel: 40 (5GHz, 40MHz)
+              Security: WPA2 Personal'

@@ -295,43 +295,89 @@ getWifiStrength() {
   fi
 }
 
-# Parse access point details string
-# $1 = `airpot --scan` line
-# $2 = BSSID or SSID of the active access point (optional)
+# Get WiFi strength for a scan result
+# $1 = Wifi RSSI (may be empty; system_profiler omits it for many networks)
+# $! = Wifi strength level 1-4 (defaults to 4 when signal is unknown)
+getScanStrength() {
+  if [ "$1" == "" ]; then
+    echo 4
+  else
+    getWifiStrength "$1"
+  fi
+}
+
+# Parse `system_profiler SPAirPortDataType` scan output into tuples
+# $1 = system_profiler SPAirPortDataType text
+# $2 = Wi-Fi interface name (e.g. en0)
+# $! = One line per network: SECTION~SSID~CHANNEL~SECURITY~RSSI
+#      SECTION is "current" for the active network, "other" for the rest.
+#      airport was removed in macOS 14.4, so system_profiler is the source.
+parseScanResults() {
+  echo "$1" | awk -v iface="$2" '
+    function flush() {
+      if (ssid != "") { print section "~" ssid "~" channel "~" security "~" rssi }
+      ssid=""; channel=""; security=""; rssi=""
+    }
+    # Interface header (8 spaces): scope parsing to the Wi-Fi interface
+    /^        [A-Za-z0-9]+:$/ {
+      flush(); cur = $1; sub(/:$/, "", cur); inIface = (cur == iface); section=""; next
+    }
+    !inIface { next }
+    # Section headers (10 spaces)
+    /^          Current Network Information:/ { flush(); section="current"; next }
+    /^          Other Local Wi-Fi Networks:/ { flush(); section="other"; next }
+    /^          [A-Za-z].*:$/ { flush(); section=""; next }
+    section=="" { next }
+    # Network fields (14 spaces)
+    /^              Channel:/ { l=$0; sub(/^ *Channel: */,"",l); split(l,a," "); channel=a[1]; next }
+    /^              Security:/ { l=$0; sub(/^ *Security: */,"",l); security=l; next }
+    /^              Signal . Noise:/ { l=$0; sub(/^ *Signal \/ Noise: */,"",l); split(l,a," "); rssi=a[1]; next }
+    /^              / { next }
+    # Network name header (12 spaces, ends with a colon)
+    /^            .*:$/ { flush(); s=$0; sub(/^ */,"",s); sub(/:$/,"",s); ssid=s; next }
+    END { flush() }
+  '
+}
+
+# Get the active network SSID from scan output
+# $1 = system_profiler SPAirPortDataType text
+# $2 = Wi-Fi interface name (e.g. en0)
+# $! = String
+getActiveScanSSID() {
+  parseScanResults "$1" "$2" | awk -F'~' '$1 == "current" { print $2; exit }'
+}
+
+# Build access point details from a scan tuple
+# $1 = SECTION~SSID~CHANNEL~SECURITY~RSSI (from parseScanResults)
+# $2 = SSID of the active access point (optional)
 # $3 = List of favorite access points (optional)
-# $! = Separated string of access point settings
-getAPDetails() {
-  # Example:          SSID BSSID             RSSI CHANNEL HT CC SECURITY
-  # Example: "Test-Network 21:aa:4c:b4:cc:11 -24  6       Y  US WPA2(PSK/AES/AES)"
-  if [[ "$1" =~ [[:space:]]*(.*)[[:space:]]+([0-9a-f:]{17})?[[:space:]]+(-[0-9]{2})[[:space:]]+([,+0-9]+)[[:space:]]+([YN]{1})[[:space:]]+([-A-Z]{2})[[:space:]]+(.*) ]]
-  then
-    SSID=$(echo ${BASH_REMATCH[1]} | xargs)
-    BSSID=${BASH_REMATCH[2]}
-    RSSI=${BASH_REMATCH[3]}
-    CHANNEL=${BASH_REMATCH[4]}
-    HT=${BASH_REMATCH[5]}
-    CC=${BASH_REMATCH[6]}
-    SECURITY=$(echo ${BASH_REMATCH[7]} | xargs)
+# $! = Separated string: PRIORITY~SSID~BSSID~RSSI~CHANNEL~SECURITY~AP_ICON
+#      BSSID is empty; system_profiler does not expose it.
+getScanDetails() {
+  IFS='~' read -r -a F <<< "$1"
+  local SECTION="${F[0]}" SSID="${F[1]}" CHANNEL="${F[2]}" SECURITY="${F[3]}" RSSI="${F[4]}"
+
+  if [ "$SSID" == "" ]; then
+    return
   fi
 
-  FAVORITED=$(listContains "$3" "$SSID")
-  PRIORITY=$PRIORITY_LOW
+  local FAVORITED=$(listContains "$3" "$SSID")
+  local PRIORITY=$PRIORITY_LOW
+  local AP_ICON
 
-  if [ "$BSSID" != "" ] && [ "$BSSID" == "$2" ] || [ "$SSID" == "$2" ]; then
+  if [ "$SECTION" == "current" ] || { [ "$2" != "" ] && [ "$SSID" == "$2" ]; }; then
     AP_ICON=$ICON_WIFI_ACTIVE_
     PRIORITY=$PRIORITY_HIGH
   elif [ "$FAVORITED" != "" ]; then
     AP_ICON=$ICON_WIFI_STAR_
     PRIORITY=$PRIORITY_MEDIUM
-  elif [[ "$SECURITY" =~ "NONE" ]]; then
+  elif [ "$SECURITY" == "None" ] || [ "$SECURITY" == "" ]; then
     AP_ICON=$ICON_WIFI_
   else
     AP_ICON=$ICON_WIFI_LOCK_
   fi
 
-  AP_ICON=$AP_ICON$(getWifiStrength "$RSSI")$ICON_END
+  AP_ICON=$AP_ICON$(getScanStrength "$RSSI")$ICON_END
 
-  if [ "$SSID" != "" ]; then
-    echo "$PRIORITY"~"$SSID"~"$BSSID"~"$RSSI"~"$CHANNEL"~"$SECURITY"~"$AP_ICON"  
-  fi
+  echo "$PRIORITY"~"$SSID"~""~"$RSSI"~"$CHANNEL"~"$SECURITY"~"$AP_ICON"
 }
