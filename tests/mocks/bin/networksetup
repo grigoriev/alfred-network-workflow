@@ -17,12 +17,13 @@ case "$1" in
     ;;
   -getairportpower) echo "Wi-Fi Power (en0): ${MOCK_WIFI_POWER:-On}" ;;
   -getinfo)
+    if [ "$MOCK_IPV6" == "yes" ]; then EXTRA6="fe80::abcd"; else EXTRA6="none"; fi
     echo "DHCP Configuration"
     echo "IP address: 192.168.1.100"
     echo "Subnet mask: 255.255.255.0"
     echo "Router: 192.168.1.1"
     echo "IPv6: Automatic"
-    echo "IPv6 IP address: none"
+    echo "IPv6 IP address: $EXTRA6"
     ;;
   -getdnsservers) echo "${MOCK_DNS:-8.8.8.8}" ;;
   -listpreferredwirelessnetworks) printf '\tHomeNet\n\tCoffeeShop\n' ;;

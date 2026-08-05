@@ -6,7 +6,9 @@ case "$2" in
     echo '* (Connected)   65F5A798-4B98-4DA1-87D8-9D605FFF6188 PPP --> L2TP       "Test-VPN"                      [PPP:L2TP]'
     ;;
   status) echo "${MOCK_VPN_STATUS:-Connected}" ;;
-  show) echo "PPP:L2TP" ;;
+  show)
+    if [ "$MOCK_VPN_TYPE" == "other" ]; then echo "IPSec"; else echo "PPP:L2TP"; fi
+    ;;
   start|stop) echo "scutil $*" ;;
   *) echo "scutil $*" ;;
 esac

@@ -43,6 +43,12 @@ setup() {
   [[ "$output" =~ "Grant Location access" ]]
 }
 
+@test "wifi.sh: shows IPv6 when present" {
+  export MOCK_IPV6=yes
+  run bash -c '. src/wifi.sh'
+  [[ "$output" =~ "fe80::abcd" ]]
+}
+
 # --- ethernet.sh -----------------------------------------------------------
 
 @test "ethernet.sh: show connected info" {
@@ -55,6 +61,12 @@ setup() {
   export MOCK_ETH=none
   run bash -c '. src/ethernet.sh'
   [[ "$output" =~ "Not Connected" ]]
+}
+
+@test "ethernet.sh: shows IPv6 when present" {
+  export MOCK_IPV6=yes
+  run bash -c '. src/ethernet.sh'
+  [[ "$output" =~ "fe80::abcd" ]]
 }
 
 @test "ethernet.sh: action echoes arg" {
@@ -110,6 +122,13 @@ setup() {
 
 @test "vpn.sh: connect a disconnected l2tp vpn" {
   export MOCK_VPN_STATUS=Disconnected
+  run bash -c '. src/vpn.sh Test-VPN'
+  [ "$status" -eq 0 ]
+}
+
+@test "vpn.sh: start a disconnected non-l2tp vpn" {
+  export MOCK_VPN_STATUS=Disconnected
+  export MOCK_VPN_TYPE=other
   run bash -c '. src/vpn.sh Test-VPN'
   [ "$status" -eq 0 ]
 }
