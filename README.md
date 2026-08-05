@@ -27,7 +27,9 @@ Or install directly from [Alfred Gallery](https://alfred.app/workflows/mrodalgaa
 
 Requires Alfred Powerpack to install this extension.
 
-This workflow might behave differently on macOS versions older than 10.7 Lion. This workflow is primarily implemented in Bash interacting with macOS network cli utils (like `networksetup`, `scutil` and `airport`) with a little help from AppleScript.
+This workflow is primarily implemented in Bash interacting with macOS network cli utils (like `networksetup`, `scutil`, `system_profiler` and `ipconfig`) with a little help from AppleScript.
+
+On macOS 14.4 Apple removed the `airport` cli that this workflow used to scan and read Wi-Fi. `wifilist` now reads `system_profiler SPAirPortDataType` and `wifi` reads `ipconfig getsummary`. macOS hides network names (SSID / BSSID) until the workflow is granted Location access, so grant it under "System Settings.app" -> "Privacy & Security" -> "Location Services" to see network names.
 
 Most functionality of this workflow will work without your user being administrator on your machine (see if your user is set as `Admin` or `Standard` in "System Settings.app" -> "Users & Groups"), but actions which changes network settings might fail if you are only a standard user.
 
