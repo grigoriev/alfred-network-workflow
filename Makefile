@@ -1,6 +1,5 @@
 WORKFLOW    := Network.alfredworkflow
-UPDATER_REF ?= main
-UPDATER_URL := https://raw.githubusercontent.com/grigoriev/alfred-workflow-updater/$(UPDATER_REF)/update.sh
+UPDATER_URL := https://github.com/grigoriev/alfred-workflow-updater/releases/latest/download/update.sh
 SCRIPTS     := src/wifi.sh src/ethernet.sh src/ap.sh src/dns.sh src/vpn.sh
 EXCLUDES    := '.git/*' '.github/*' '.gitignore' 'Makefile' '$(WORKFLOW)'
 
