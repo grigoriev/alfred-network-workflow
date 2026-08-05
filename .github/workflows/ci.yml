@@ -3,6 +3,16 @@ name: CI
 on: [push, pull_request]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: ShellCheck
+        run: shellcheck -x --severity=warning src/wifi.sh src/ethernet.sh src/ap.sh src/dns.sh src/vpn.sh
+
   test:
     runs-on: macos-latest
 
@@ -18,7 +28,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    needs: [test]
+    needs: [lint, test]
 
     steps:
       - name: Checkout
