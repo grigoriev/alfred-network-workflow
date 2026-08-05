@@ -1,4 +1,4 @@
-# <img src="https://raw.githubusercontent.com/mrodalgaard/alfred-network-workflow/master/icon.png" alt="network" width="32"> Alfred Network Workflow ![](https://github.com/mrodalgaard/alfred-network-workflow/workflows/CI/badge.svg)
+# <img src="https://raw.githubusercontent.com/grigoriev/alfred-network-workflow/master/icon.png" alt="network" width="32"> Alfred Network Workflow ![](https://github.com/grigoriev/alfred-network-workflow/workflows/CI/badge.svg)
 
 Alfred workflow that can show and change your network settings: Wi-Fi, Ethernet, VPN, DNS, etc.
 
@@ -6,9 +6,7 @@ This is a collection of the functionalities of already existing network-oriented
 
 ## Install
 
-Go to [Latest Release](https://github.com/mrodalgaard/alfred-network-workflow/releases/latest) and under `Assets` download `Network.alfredworkflow`. Once downloaded, double click the file and it will show up in Alfred.
-
-Or install directly from [Alfred Gallery](https://alfred.app/workflows/mrodalgaard/network/).
+Go to [Latest Release](https://github.com/grigoriev/alfred-network-workflow/releases/latest) and under `Assets` download `Network.alfredworkflow`. Once downloaded, double click the file and it will show up in Alfred.
 
 ## Usage
 
@@ -19,8 +17,8 @@ Or install directly from [Alfred Gallery](https://alfred.app/workflows/mrodalgaa
 * Type `dns` to list and change DNS settings for primary connection.
 
 <p align="center">
-<img src="https://raw.githubusercontent.com/mrodalgaard/alfred-network-workflow/master/screenshots/wifi-preview.png" alt="alfred-wifi-workflow-wifi" width="600">
-<img src="https://raw.githubusercontent.com/mrodalgaard/alfred-network-workflow/master/screenshots/wifilist-preview.png" alt="alfred-wifi-workflow-wifilist" width="600">
+<img src="https://raw.githubusercontent.com/grigoriev/alfred-network-workflow/master/screenshots/wifi-preview.png" alt="alfred-wifi-workflow-wifi" width="600">
+<img src="https://raw.githubusercontent.com/grigoriev/alfred-network-workflow/master/screenshots/wifilist-preview.png" alt="alfred-wifi-workflow-wifilist" width="600">
 </p>
 
 ## Limitations
