@@ -1,46 +1,75 @@
-# <img src="https://raw.githubusercontent.com/grigoriev/alfred-network-workflow/master/icon.png" alt="network" width="32"> Alfred Network Workflow ![](https://github.com/grigoriev/alfred-network-workflow/workflows/CI/badge.svg)
+# <img src="https://raw.githubusercontent.com/grigoriev/alfred-network-workflow/master/icon.png" alt="network" width="32"> Alfred Network Workflow ![CI](https://github.com/grigoriev/alfred-network-workflow/actions/workflows/ci.yml/badge.svg)
 
-Alfred workflow that can show and change your network settings: Wi-Fi, Ethernet, VPN, DNS, etc.
+Alfred workflow that shows and changes your network settings: Wi-Fi, Ethernet, VPN and DNS.
 
-This is a collection of the functionalities of already existing network-oriented workflows that I found half-baked or stalled. Improved on performance, usability and details.
+This is a maintained fork of [mrodalgaard/alfred-network-workflow](https://github.com/mrodalgaard/alfred-network-workflow), updated for modern macOS.
 
 ## Install
 
-Go to [Latest Release](https://github.com/grigoriev/alfred-network-workflow/releases/latest) and under `Assets` download `Network.alfredworkflow`. Once downloaded, double click the file and it will show up in Alfred.
+1. Open the [latest release](https://github.com/grigoriev/alfred-network-workflow/releases/latest).
+2. Under **Assets**, download `Network.alfredworkflow`.
+3. Double click the file to add it to Alfred.
+
+Alfred [Powerpack](https://www.alfredapp.com/powerpack/) is required.
 
 ## Usage
 
-* Type `wifi` to show Wi-Fi info and enable/disable.
-* Type `eth` to show ethernet info (if connected).
-* Type `wifilist` to scan for Wi-Fi hotspots.
-* Type `vpn` to list configured VPNs and connect.
-* Type `dns` to list and change DNS settings for primary connection.
+| Keyword    | Action                                          |
+| ---------- | ----------------------------------------------- |
+| `wifi`     | Show Wi-Fi info, toggle Wi-Fi on or off.        |
+| `eth`      | Show Ethernet info when connected.              |
+| `wifilist` | Scan for Wi-Fi networks and connect.            |
+| `vpn`      | List configured VPNs and connect.               |
+| `dns`      | List and change DNS for the primary connection. |
 
 <p align="center">
-<img src="https://raw.githubusercontent.com/grigoriev/alfred-network-workflow/master/screenshots/wifi-preview.png" alt="alfred-wifi-workflow-wifi" width="600">
-<img src="https://raw.githubusercontent.com/grigoriev/alfred-network-workflow/master/screenshots/wifilist-preview.png" alt="alfred-wifi-workflow-wifilist" width="600">
+<img src="https://raw.githubusercontent.com/grigoriev/alfred-network-workflow/master/screenshots/wifi-preview.png" alt="wifi" width="600">
+<img src="https://raw.githubusercontent.com/grigoriev/alfred-network-workflow/master/screenshots/wifilist-preview.png" alt="wifilist" width="600">
 </p>
+
+## macOS 14 and later
+
+Apple removed the `airport` cli in macOS 14.4. This fork replaces it:
+
+- `wifilist` scans with `system_profiler SPAirPortDataType`.
+- `wifi` reads the current connection with `ipconfig getsummary`.
+
+macOS hides network names (SSID and BSSID) until the workflow has Location access. To see names, open **System Settings > Privacy & Security > Location Services** and enable location for Alfred.
 
 ## Limitations
 
-Requires Alfred Powerpack to install this extension.
+- Most actions work as a standard user. Actions that change network settings can fail without admin rights.
+- Access point changes need your keychain password. This is a [known limitation](https://github.com/mrodalgaard/alfred-network-workflow/issues/11#issuecomment-559252188).
+- A Wi-Fi scan takes a few seconds. `wifilist` shows a "Scanning" placeholder while it runs.
 
-This workflow is primarily implemented in Bash interacting with macOS network cli utils (like `networksetup`, `scutil`, `system_profiler` and `ipconfig`) with a little help from AppleScript.
+## How it works
 
-On macOS 14.4 Apple removed the `airport` cli that this workflow used to scan and read Wi-Fi. `wifilist` now reads `system_profiler SPAirPortDataType` and `wifi` reads `ipconfig getsummary`. macOS hides network names (SSID / BSSID) until the workflow is granted Location access, so grant it under "System Settings.app" -> "Privacy & Security" -> "Location Services" to see network names.
+The logic lives in `src/` as Bash scripts. `info.plist` is the Alfred workflow definition: it maps each keyword to its script and wires the connect actions. Every command runs `src/<name>.sh`, talks to macOS network utilities (`networksetup`, `scutil`, `system_profiler`, `ipconfig`), and returns Alfred JSON feedback.
 
-Most functionality of this workflow will work without your user being administrator on your machine (see if your user is set as `Admin` or `Standard` in "System Settings.app" -> "Users & Groups"), but actions which changes network settings might fail if you are only a standard user.
+## Development
 
-WIFI / Access Point changes requires your keychain password which is a known limitation [Read more](https://github.com/mrodalgaard/alfred-network-workflow/issues/11#issuecomment-559252188).
+Tests use [bats](https://github.com/bats-core/bats-core):
 
-## Tests
+```sh
+brew install bats-core
+bats tests
+```
 
-[bats](https://github.com/bats-core/bats-core) is used for automatic testing of Bash functionality. Install with `brew install bats-core` using [brew](http://brew.sh/).
+System commands are replaced by mocks under `tests/mocks/bin`, so the action scripts run deterministically without touching real network state.
 
-Run tests: `bats tests`
+[ShellCheck](https://www.shellcheck.net/) lints the scripts in CI:
+
+```sh
+brew install shellcheck
+shellcheck -x src/wifi.sh src/ethernet.sh src/ap.sh src/dns.sh src/vpn.sh
+```
+
+## Releases
+
+Pushing a `v*` tag builds `Network.alfredworkflow` and publishes a GitHub Release with the asset attached. The tag also sets the workflow version.
 
 ## Credits
 
-> Contributions, bug reports and feature requests are very welcome.
+A fork of the original workflow by [Martin Rodalgaard](https://github.com/mrodalgaard/alfred-network-workflow). Contributions, bug reports and feature requests are welcome.
 
-> &nbsp; &nbsp; _- Martin_
+Licensed under the MIT License. See [LICENSE.md](LICENSE.md).
