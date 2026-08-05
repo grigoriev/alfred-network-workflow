@@ -66,21 +66,23 @@ IPv6 IP address: none
 IPv6 Router: none
 Wi-Fi ID: f8:06:c1:00:a3:cc'
 
-INFO='agrCtlRSSI: -47
-     agrExtRSSI: 0
-    agrCtlNoise: -91
-    agrExtNoise: 0
-          state: running
-        op mode: station
-     lastTxRate: 450
-        maxRate: 450
-lastAssocStatus: 0
-    802.11 auth: open
-      link auth: wpa2-psk
-          BSSID: c8:7:19:2c:0:6f
-           SSID: Test-Network
-            MCS: 23
-        channel: 36,1'
+SUMMARY='<dictionary> {
+  BSSID : c8:07:19:2c:00:6f
+  ConnectionID : 29
+  InterfaceType : WiFi
+  LinkStatusActive : TRUE
+  NetworkID : ABCD1234
+  SSID : Test-Network
+  Security : WPA2
+}'
+
+SUMMARY_REDACTED='<dictionary> {
+  BSSID : <redacted>
+  InterfaceType : WiFi
+  NetworkID : <redacted>
+  SSID : <redacted>
+  Security : NONE
+}'
 
 SCUTIL='Available network connection services in the current set (*=enabled):
 * (Disconnected)   9798DAED-21C7-44A1-B382-EFCE7E1373F1 PPP --> Modem (usbmodem1411) "Arduino Uno"                    [PPP:Modem]

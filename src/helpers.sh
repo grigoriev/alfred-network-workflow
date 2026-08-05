@@ -142,48 +142,13 @@ getIPv6() {
   fi
 }
 
-# Extract SSID
-# $1 = airport -getinfo
+# Extract a value from ipconfig getsummary output
+# $1 = `ipconfig getsummary <interface>` text
+# $2 = key (e.g. SSID, BSSID, Security)
 # $! = String
-getSSID() {
-  echo "$1" | awk '/ SSID/ {print substr($0, index($0, $2))}'
-}
-
-# Pad BSSID
-# $1 = BSSID string
-# $! = String
-padBSSID() {
-  if [ ${#1} == 17 ]; then
-    echo "$1"
-  else
-    for PART in $(echo "$1" | tr ":" "\n"); do
-      if [ "$skipFirst" != "" ]; then
-        printf ":"
-      fi
-      skipFirst=true
-      printf "%02s" "$PART"
-    done
-  fi
-}
-
-# Get BSSID
-# $1 = airport -getinfo
-# $! = String
-getBSSID() {
-  local BSSID=$(echo "$1" | awk '/ BSSID/ {print substr($0, index($0, $2))}' | xargs)
-  # Handle missing BSSID
-  if [ "$BSSID" == "BSSID:" ]; then
-    echo ""
-  else
-    echo $(padBSSID "$BSSID")
-  fi
-}
-
-# Extract wifi authentication
-# $1 = airport -getinfo
-# $! = String
-getAuth() {
-  echo "$1" | awk '/ link auth/ {print substr($0, index($0, $2))}'
+# airport was removed in macOS 14.4, so ipconfig getsummary is the source.
+getSummaryValue() {
+  echo "$1" | sed -n "s/^  $2 : //p" | head -n 1
 }
 
 # Resolve global IP

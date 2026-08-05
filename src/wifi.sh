@@ -40,18 +40,21 @@ if [ "$IPv6" != "" ]; then
 fi
 
 # Output WiFi AP info
-INFO=$($AIRPORT --getinfo)
-SSID=$(getSSID "$INFO")
-BSSID=$(getBSSID "$INFO")
-AUTH=$(getAuth "$INFO")
+SUMMARY=$(ipconfig getsummary "$INTERFACE" 2>/dev/null)
+SSID=$(getSummaryValue "$SUMMARY" "SSID")
+BSSID=$(getSummaryValue "$SUMMARY" "BSSID")
+AUTH=$(getSummaryValue "$SUMMARY" "Security")
 
 # Use BSSID with SSID as fallback
 SSID_NAME="$SSID ($BSSID)"
-if [ "$BSSID" == "" ]; then
+if [ "$BSSID" == "" ] || [ "$BSSID" == "<redacted>" ]; then
   SSID_NAME="$SSID"
 fi
 
-if [ "$SSID" != "" ]; then
+if [ "$SSID" == "<redacted>" ]; then
+  # macOS hides the name until the workflow is granted Location access
+  addResult "" "" "$NAME connected" "Grant Location access to see network name" "$ICON_WIFI"
+elif [ "$SSID" != "" ]; then
   addResult "" "$SSID" "$SSID_NAME" "$NAME access point ($AUTH)" "$ICON_WIFI"
 fi
 

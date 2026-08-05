@@ -42,29 +42,29 @@ load variables
   [ "$output" = "" ]
 }
 
-@test "getSSID: get SSID" {
-  run getSSID "$INFO"
+@test "getSummaryValue: get SSID" {
+  run getSummaryValue "$SUMMARY" "SSID"
   [ "$output" = "Test-Network" ]
 }
 
-@test "getBSSID: get BSSID" {
-  run getBSSID "$INFO"
+@test "getSummaryValue: get BSSID" {
+  run getSummaryValue "$SUMMARY" "BSSID"
   [ "$output" = "c8:07:19:2c:00:6f" ]
 }
 
-@test "getBSSID: no BSSID" {
-  run getBSSID "          BSSID:"
+@test "getSummaryValue: get security" {
+  run getSummaryValue "$SUMMARY" "Security"
+  [ "$output" = "WPA2" ]
+}
+
+@test "getSummaryValue: missing key is empty" {
+  run getSummaryValue "$SUMMARY" "Channel"
   [ "$output" = "" ]
 }
 
-@test "getBSSID: zero pads BSSID" {
-  run getBSSID "          BSSID: c8:7:19:2c:0:6f"
-  [ "$output" = "c8:07:19:2c:00:6f" ]
-}
-
-@test "getAuth: get auth" {
-  run getAuth "$INFO"
-  [ "$output" = "auth: wpa2-psk" ]
+@test "getSummaryValue: read redacted values" {
+  run getSummaryValue "$SUMMARY_REDACTED" "SSID"
+  [ "$output" = "<redacted>" ]
 }
 
 @test "getGlobalIP: get global IP" {
