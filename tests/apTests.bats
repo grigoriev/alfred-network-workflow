@@ -13,193 +13,99 @@ load variables
   [ "${ARRAY[2]}" == "Martins iPhone" ]
 }
 
-@test "getAPDetails: get AP" {
-  INPUT="   Test-Network 21:aa:4c:b4:cc:11 -24  6       Y  US WPA2(PSK/AES/AES)"
-
-  run getAPDetails "$INPUT"
-  IFS='~' read -r -a ARRAY <<< "$output"
+@test "parseScanResults: parse current and other networks" {
+  run parseScanResults "$SCAN" "en0"
 
   [ "$status" -eq 0 ]
-  [ "${ARRAY[0]}" == $PRIORITY_LOW ]
-  [ "${ARRAY[1]}" == "Test-Network" ]
-  [ "${ARRAY[2]}" == "21:aa:4c:b4:cc:11" ]
-  [ "${ARRAY[3]}" == "-24" ]
-  [ "${ARRAY[4]}" == "6" ]
-  [ "${ARRAY[5]}" == "WPA2(PSK/AES/AES)" ]
-  [ "${ARRAY[6]}" == $ICON_WIFI_LOCK ]
+  [ "${lines[0]}" == "current~HomeNet~36~WPA2 Personal~-45" ]
+  [ "${lines[1]}" == "other~CoffeeShop~40~None~" ]
+  [ "${lines[2]}" == "other~Neighbor 5G~132~WPA2 Personal~-72" ]
+  [ "${#lines[@]}" == 3 ]
 }
 
-@test "getAPDetails: no BSSID on MacOS Monterey" {
-  INPUT="                        y6Uj4xYm                   -76  11      Y  -- WPA2(PSK/AES/AES) "
+@test "parseScanResults: ignore other interfaces" {
+  run parseScanResults "$SCAN" "en0"
 
-  run getAPDetails "$INPUT"
-  IFS='~' read -r -a ARRAY <<< "$output"
+  [ "$(echo "$output" | grep -c awdl)" == 0 ]
+  [ "$(echo "$output" | grep -c Infrastructure)" == 0 ]
+}
+
+@test "getActiveScanSSID: read the current network name" {
+  run getActiveScanSSID "$SCAN" "en0"
 
   [ "$status" -eq 0 ]
-  [ "${ARRAY[0]}" == $PRIORITY_LOW ]
-  [ "${ARRAY[1]}" == "y6Uj4xYm" ]
-  [ "${ARRAY[2]}" == "" ]
-  [ "${ARRAY[3]}" == "-76" ]
-  [ "${ARRAY[4]}" == "11" ]
-  [ "${ARRAY[5]}" == "WPA2(PSK/AES/AES)" ]
-  [ "${ARRAY[6]}" == $ICON_WIFI_LOCK_2 ]
+  [ "$output" == "HomeNet" ]
 }
 
-@test "getAPDetails: get multiband AP with spaces" {
-  INPUT="        New AP 50:1d:bf:56:2f:2e -54  132,+1  Y  DK WPA2(PSK/AES/AES) "
+@test "getScanStrength: level from RSSI" {
+  run getScanStrength "-45"
+  [ "$output" == 4 ]
 
-  run getAPDetails "$INPUT"
-  IFS='~' read -r -a ARRAY <<< "$output"
+  run getScanStrength "-65"
+  [ "$output" == 3 ]
 
-  [ "${ARRAY[1]}" == "New AP" ]
-  [ "${ARRAY[2]}" == "50:1d:bf:56:2f:2e" ]
-  [ "${ARRAY[3]}" == "-54" ]
-  [ "${ARRAY[4]}" == "132,+1" ]
-  [ "${ARRAY[5]}" == "WPA2(PSK/AES/AES)" ]
-  [ "${ARRAY[6]}" == $ICON_WIFI_LOCK ]
+  run getScanStrength "-75"
+  [ "$output" == 2 ]
+
+  run getScanStrength "-85"
+  [ "$output" == 1 ]
 }
 
-@test "getAPDetails: get random printer AP" {
-  INPUT="   HP-Print-02-Officejet Pro 8600 9c:b6:54:58:05:02 -79  4       N  -- WPA2(PSK/AES/AES) "
-
-  run getAPDetails "$INPUT"
-  IFS='~' read -r -a ARRAY <<< "$output"
-
-  [ "${ARRAY[0]}" == $PRIORITY_LOW ]
-  [ "${ARRAY[1]}" == "HP-Print-02-Officejet Pro 8600" ]
-  [ "${ARRAY[2]}" == "9c:b6:54:58:05:02" ]
-  [ "${ARRAY[3]}" == "-79" ]
-  [ "${ARRAY[4]}" == "4" ]
-  [ "${ARRAY[5]}" == "WPA2(PSK/AES/AES)" ]
-  [ "${ARRAY[6]}" == $ICON_WIFI_LOCK_2 ]
+@test "getScanStrength: unknown signal defaults to full" {
+  run getScanStrength ""
+  [ "$output" == 4 ]
 }
 
-@test "getAPDetails: get random printer AP on MacOS Monterey" {
-  INPUT="   HP-Print-02-Officejet Pro 8600                   -79  4       N  -- WPA2(PSK/AES/AES) "
-
-  run getAPDetails "$INPUT"
-  IFS='~' read -r -a ARRAY <<< "$output"
-
-  [ "${ARRAY[0]}" == $PRIORITY_LOW ]
-  [ "${ARRAY[1]}" == "HP-Print-02-Officejet Pro 8600" ]
-  [ "${ARRAY[2]}" == "" ]
-  [ "${ARRAY[3]}" == "-79" ]
-  [ "${ARRAY[4]}" == "4" ]
-  [ "${ARRAY[5]}" == "WPA2(PSK/AES/AES)" ]
-  [ "${ARRAY[6]}" == $ICON_WIFI_LOCK_2 ]
-}
-
-@test "getAPDetails: get unknown AP" {
-  INPUT="      test 08:61:6e:c0:9b:ff -27  11      Y  -- WPA(PSK/AES,TKIP/TKIP) WPA2(PSK/AES,TKIP/TKIP)"
-
-  run getAPDetails "$INPUT"
-  IFS='~' read -r -a ARRAY <<< "$output"
-
-  [ "${ARRAY[0]}" == $PRIORITY_LOW ]
-  [ "${ARRAY[1]}" == "test" ]
-  [ "${ARRAY[2]}" == "08:61:6e:c0:9b:ff" ]
-  [ "${ARRAY[5]}" == "WPA(PSK/AES,TKIP/TKIP) WPA2(PSK/AES,TKIP/TKIP)" ]
-  [ "${ARRAY[6]}" == $ICON_WIFI_LOCK ]
-}
-
-@test "getAPDetails: active AP is marked with an icon" {
-  INPUT="        New AP 50:1d:bf:56:2f:2e -54  132,+1  Y  DK WPA2(PSK/AES/AES) "
-
-  run getAPDetails "$INPUT" "50:1d:bf:56:2f:2e"
+@test "getScanDetails: active network is marked with an icon" {
+  run getScanDetails "current~HomeNet~36~WPA2 Personal~-45" "HomeNet"
   IFS='~' read -r -a ARRAY <<< "$output"
 
   [ "${ARRAY[0]}" == $PRIORITY_HIGH ]
-  [ "${ARRAY[1]}" == "New AP" ]
-  [ "${ARRAY[2]}" == "50:1d:bf:56:2f:2e" ]
+  [ "${ARRAY[1]}" == "HomeNet" ]
+  [ "${ARRAY[3]}" == "-45" ]
+  [ "${ARRAY[4]}" == "36" ]
+  [ "${ARRAY[5]}" == "WPA2 Personal" ]
   [ "${ARRAY[6]}" == $ICON_WIFI_ACTIVE ]
 }
 
-@test "getAPDetails: active AP without BSSID is marked with an icon" {
-  INPUT="        New AP                   -54  132,+1  Y  DK WPA2(PSK/AES/AES) "
-
-  run getAPDetails "$INPUT" "New AP"
+@test "getScanDetails: open network uses a plain icon" {
+  run getScanDetails "other~CoffeeShop~40~None~"
   IFS='~' read -r -a ARRAY <<< "$output"
 
-  [ "${ARRAY[0]}" == $PRIORITY_HIGH ]
-  [ "${ARRAY[1]}" == "New AP" ]
-  [ "${ARRAY[6]}" == $ICON_WIFI_ACTIVE ]
+  [ "${ARRAY[1]}" == "CoffeeShop" ]
+  [ "${ARRAY[6]}" == $ICON_WIFI_4 ]
 }
 
-@test "getAPDetails: do not mark unknown active AP" {
-  INPUT="        New AP 2                 -54  132,+1  Y  DK WPA2(PSK/AES/AES) "
-
-  run getAPDetails "$INPUT" "New AP"
+@test "getScanDetails: secured network uses a lock icon" {
+  run getScanDetails "other~Neighbor 5G~132~WPA2 Personal~-72"
   IFS='~' read -r -a ARRAY <<< "$output"
 
   [ "${ARRAY[0]}" == $PRIORITY_LOW ]
-  [ "${ARRAY[1]}" == "New AP 2" ]
-  [ "${ARRAY[6]}" == $ICON_WIFI_LOCK ]
+  [ "${ARRAY[1]}" == "Neighbor 5G" ]
+  [ "${ARRAY[6]}" == $ICON_WIFI_LOCK_2 ]
 }
 
-@test "getAPDetails: active BSSID can contain starting zeros" {
-  INPUT="        New AP 50:0d:0f:56:00:2e -54  132,+1  Y  DK WPA2(PSK/AES/AES) "
-
-  run getAPDetails "$INPUT" "50:0d:0f:56:00:2e"
-  IFS='~' read -r -a ARRAY <<< "$output"
-
-  [ "${ARRAY[1]}" == "New AP" ]
-  [ "${ARRAY[2]}" == "50:0d:0f:56:00:2e" ]
-  [ "${ARRAY[6]}" == $ICON_WIFI_ACTIVE ]
-}
-
-@test "getAPDetails: filter empty SSIDs" {
-  INPUT="               50:0d:0f:56:00:2e -54  132,+1  Y  DK WPA2(PSK/AES/AES) "
-
-  run getAPDetails "$INPUT"
-  IFS='~' read -r -a ARRAY <<< "$output"
-
-  [ "${#ARRAY[@]}" == 0 ]
-}
-
-@test "getAPDetails: favorited AP is marked with an icon" {
-  INPUT="        New AP 50:1d:bf:56:2f:2e -54  132,+1  Y  DK WPA2(PSK/AES/AES) "
-  AP_LIST="New AP
+@test "getScanDetails: favorited network is marked with an icon" {
+  AP_LIST="Neighbor 5G
   Random other AP"
 
-  run getAPDetails "$INPUT" "1234" "$AP_LIST"
+  run getScanDetails "other~Neighbor 5G~132~WPA2 Personal~-72" "" "$AP_LIST"
   IFS='~' read -r -a ARRAY <<< "$output"
 
   [ "${ARRAY[0]}" == $PRIORITY_MEDIUM ]
-  [ "${ARRAY[1]}" == "New AP" ]
-  [ "${ARRAY[2]}" == "50:1d:bf:56:2f:2e" ]
-  [ "${ARRAY[6]}" == $ICON_WIFI_STAR ]
+  [ "${ARRAY[6]}" == $ICON_WIFI_STAR_2 ]
 }
 
-@test "getAPDetails: open AP is marked with a plain icon" {
-  INPUT="        New AP 50:1d:bf:56:2f:2e -54  132,+1  Y  DK NONE "
-
-  run getAPDetails "$INPUT"
+@test "getScanDetails: no BSSID from system_profiler" {
+  run getScanDetails "other~CoffeeShop~40~None~"
   IFS='~' read -r -a ARRAY <<< "$output"
 
-  [ "${ARRAY[1]}" == "New AP" ]
-  [ "${ARRAY[6]}" == $ICON_WIFI ]
+  [ "${ARRAY[2]}" == "" ]
 }
 
-@test "getAPDetails: icon is set according to strength" {
-  INPUT="        New AP 50:1d:bf:56:2f:2e -55  1  Y  US NONE "
-  run getAPDetails "$INPUT"
-  IFS='~' read -r -a ARRAY <<< "$output"
-  [ "${ARRAY[6]}" == "$ICON_WIFI_4" ]
-
-  INPUT="        New AP 50:1d:bf:56:2f:2e -65  1  Y  US NONE "
-  run getAPDetails "$INPUT"
-  IFS='~' read -r -a ARRAY <<< "$output"
-  [ "${ARRAY[6]}" == "$ICON_WIFI_3" ]
-
-  INPUT="        New AP 50:1d:bf:56:2f:2e -75  1  Y  US NONE "
-  run getAPDetails "$INPUT"
-  IFS='~' read -r -a ARRAY <<< "$output"
-  [ "${ARRAY[6]}" == $ICON_WIFI_2 ]
-
-  INPUT="        New AP 50:1d:bf:56:2f:2e -85  1  Y  US NONE "
-  run getAPDetails "$INPUT"
-  IFS='~' read -r -a ARRAY <<< "$output"
-  [ "${ARRAY[6]}" == $ICON_WIFI_1 ]
+@test "getScanDetails: filter empty SSIDs" {
+  run getScanDetails "other~~40~None~"
+  [ "$output" == "" ]
 }
 
 @test "listContains: contains element" {

@@ -13,13 +13,20 @@ if [ "$1" != "" ]; then
   exit
 fi
 
+# Guard against a Mac without Wi-Fi hardware
+if [ -z "$INTERFACE" ]; then
+  addResult "" "" "No Wi-Fi interface found" "This Mac has no Wi-Fi hardware" "$ICON_WIFI_ERROR" "no"
+  getJSONResults
+  return
+fi
+
 # Get interface mac address
 MAC=$(getWifiMac)
 
 # Handle Wi-Fi off state
 if [ "$(getWifiState "$INTERFACE")" == 0 ]; then
   addResult "" "On" "Turn $NAME on" "$INTERFACE ($MAC)" "$ICON_WIFI_ERROR"
-  getXMLResults
+  getJSONResults
   return
 fi
 
@@ -40,18 +47,21 @@ if [ "$IPv6" != "" ]; then
 fi
 
 # Output WiFi AP info
-INFO=$($AIRPORT --getinfo)
-SSID=$(getSSID "$INFO")
-BSSID=$(getBSSID "$INFO")
-AUTH=$(getAuth "$INFO")
+SUMMARY=$(ipconfig getsummary "$INTERFACE" 2>/dev/null)
+SSID=$(getSummaryValue "$SUMMARY" "SSID")
+BSSID=$(getSummaryValue "$SUMMARY" "BSSID")
+AUTH=$(getSummaryValue "$SUMMARY" "Security")
 
 # Use BSSID with SSID as fallback
 SSID_NAME="$SSID ($BSSID)"
-if [ "$BSSID" == "" ]; then
+if [ "$BSSID" == "" ] || [ "$BSSID" == "<redacted>" ]; then
   SSID_NAME="$SSID"
 fi
 
-if [ "$SSID" != "" ]; then
+if [ "$SSID" == "<redacted>" ]; then
+  # macOS hides the name until the workflow is granted Location access
+  addResult "" "" "$NAME connected" "Grant Location access to see network name" "$ICON_WIFI"
+elif [ "$SSID" != "" ]; then
   addResult "" "$SSID" "$SSID_NAME" "$NAME access point ($AUTH)" "$ICON_WIFI"
 fi
 
@@ -75,4 +85,4 @@ fi
 
 addResult "" "Off" "Turn $NAME Off" "$INTERFACE ($MAC)" "$ICON_WIFI"
 
-getXMLResults
+getJSONResults

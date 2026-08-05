@@ -1,6 +1,27 @@
 #!/bin/bash
 
 RESULTS=()
+RERUN=""
+VARIABLES=()
+
+###############################################################################
+# Ask Alfred to re-run the script filter after N seconds (0.1 - 5.0)
+#
+# $1 delay in seconds
+###############################################################################
+setRerun() {
+  RERUN="$1"
+}
+
+###############################################################################
+# Set an Alfred variable, passed back to the script on the next run
+#
+# $1 key
+# $2 value
+###############################################################################
+addVariable() {
+  VARIABLES+=("$1"$'\t'"$2")
+}
 
 ################################################################################
 # Adds a result to the result array
@@ -10,36 +31,79 @@ RESULTS=()
 # $3 title
 # $4 subtitle
 # $5 icon
-# $6 valid
+# $6 valid (pass "no" for a non-actionable item; anything else is valid)
 # $7 autocomplete
 ###############################################################################
 addResult() {
-  RESULT="<item uid='$(xmlEncode "$1")' arg='$(xmlEncode "$2")' valid='$6' autocomplete='$7'><title>$(xmlEncode "$3")</title><subtitle>$(xmlEncode "$4")</subtitle><icon>$(xmlEncode "$5")</icon></item>"
-  RESULTS+=("$RESULT")
+  local ITEM="{"
+  if [ -n "$1" ]; then
+    ITEM+="\"uid\":\"$(jsonEncode "$1")\","
+  fi
+  ITEM+="\"title\":\"$(jsonEncode "$3")\","
+  ITEM+="\"subtitle\":\"$(jsonEncode "$4")\","
+  ITEM+="\"arg\":\"$(jsonEncode "$2")\","
+  ITEM+="\"icon\":{\"path\":\"$(jsonEncode "$5")\"},"
+  if [ "$6" = "no" ]; then
+    ITEM+="\"valid\":false,"
+  else
+    ITEM+="\"valid\":true,"
+  fi
+  if [ -n "$7" ]; then
+    ITEM+="\"autocomplete\":\"$(jsonEncode "$7")\","
+  fi
+  ITEM="${ITEM%,}}"
+  RESULTS+=("$ITEM")
 }
 
 ###############################################################################
-# Prints the feedback xml to stdout
+# Prints the feedback json to stdout (Alfred Script Filter format)
 ###############################################################################
-getXMLResults() {
-  echo "<?xml version='1.0'?><items>"
+getJSONResults() {
+  local OUT="{"
 
-#  if [ "${#string[@]}" = "0" ]; then
-#    echo "<item uid='oftask' arg='-' valid='no'><title>No results found</title><subtitle>Please try another search term</subtitle><icon></icon></item>"
-#  fi
+  if [ -n "$RERUN" ]; then
+    OUT+="\"rerun\":$RERUN,"
+  fi
 
-  for R in ${RESULTS[*]}; do
-    echo "$R" | tr "\n" " "
+  if [ "${#VARIABLES[@]}" -gt 0 ]; then
+    OUT+="\"variables\":{"
+    local J=0 PAIR KEY VAL
+    for PAIR in "${VARIABLES[@]}"; do
+      KEY="${PAIR%%$'\t'*}"
+      VAL="${PAIR#*$'\t'}"
+      if [ "$J" -gt 0 ]; then
+        OUT+=","
+      fi
+      OUT+="\"$(jsonEncode "$KEY")\":\"$(jsonEncode "$VAL")\""
+      J=$((J + 1))
+    done
+    OUT+="},"
+  fi
+
+  OUT+="\"items\":["
+  local I=0 R
+  for R in "${RESULTS[@]}"; do
+    if [ "$I" -gt 0 ]; then
+      OUT+=","
+    fi
+    OUT+="$R"
+    I=$((I + 1))
   done
-
-  echo "</items>"
+  OUT+="]}"
+  printf '%s\n' "$OUT"
 }
 
 ###############################################################################
-# Escapes XML special characters with their entities
+# Escapes a string for embedding in a JSON string literal
 ###############################################################################
-xmlEncode() {
-  echo "$1" | sed -e 's/&/\&amp;/g' -e 's/>/\&gt;/g' -e 's/</\&lt;/g' -e "s/'/\&apos;/g" -e 's/"/\&quot;/g'
+jsonEncode() {
+  local S="$1"
+  S="${S//\\/\\\\}"
+  S="${S//\"/\\\"}"
+  S="${S//$'\n'/\\n}"
+  S="${S//$'\t'/\\t}"
+  S="${S//$'\r'/\\r}"
+  printf '%s' "$S"
 }
 
 ###############################################################################
@@ -71,9 +135,9 @@ setPref() {
     touch "$PREFFILE"
   fi
 
-  local KEY_EXISTS=$(grep -c "$1=" "$PREFFILE")
-  if [ "$KEY_EXISTS" = "1" ]; then
-    local TMP=$(grep -ve "^$1" "$PREFFILE")
+  local KEY_EXISTS=$(grep -c "^$1=" "$PREFFILE")
+  if [ "$KEY_EXISTS" != "0" ]; then
+    local TMP=$(grep -ve "^$1=" "$PREFFILE")
     echo "$TMP" > "$PREFFILE"
   fi
   echo "$1=$2" >> "$PREFFILE"
@@ -107,10 +171,6 @@ getPref() {
     return
   fi
 
-  local VALUE=$(sed "/^\#/d" "$PREFFILE" | grep "$1"  | tail -n 1 | cut -d "=" -f2-)
+  local VALUE=$(sed "/^\#/d" "$PREFFILE" | grep "^$1=" | tail -n 1 | cut -d "=" -f2-)
   echo "$VALUE"
-}
-
-getLang() {
-  defaults read .GlobalPreferences AppleLanguages | tr -d [:space:] | cut -c2-3
 }

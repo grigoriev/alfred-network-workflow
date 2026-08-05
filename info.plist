@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>bundleid</key>
-	<string>dk.rodalgaard.alfred.network</string>
+	<string>com.grigoriev.alfred.network</string>
 	<key>category</key>
 	<string>Tools</string>
 	<key>connections</key>
@@ -107,7 +107,7 @@
 		</array>
 	</dict>
 	<key>createdby</key>
-	<string>Martin Rodalgaard</string>
+	<string>Sergey Grigoriev</string>
 	<key>description</key>
 	<string>Show and change your network settings</string>
 	<key>disabled</key>
@@ -497,7 +497,7 @@
 		</dict>
 	</array>
 	<key>readme</key>
-	<string>https://github.com/mrodalgaard/alfred-network-workflow</string>
+	<string>https://github.com/grigoriev/alfred-network-workflow</string>
 	<key>uidata</key>
 	<dict>
 		<key>18344CF4-87B8-4EAC-960F-0424188DBD78</key>
@@ -581,8 +581,8 @@
 	<key>userconfigurationconfig</key>
 	<array/>
 	<key>version</key>
-	<string>1.7</string>
+	<string>2.0.0</string>
 	<key>webaddress</key>
-	<string>https://github.com/mrodalgaard/alfred-network-workflow</string>
+	<string>https://github.com/grigoriev/alfred-network-workflow</string>
 </dict>
 </plist>

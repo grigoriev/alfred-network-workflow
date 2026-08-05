@@ -12,7 +12,7 @@ fi
 # Handle ethernet unconnected state
 if [ "$(getEthernetState "$INTERFACE")" == 0 ]; then
   addResult "" "" "Not Connected" "Ethernet is not connected" "$ICON_ETH"
-  getXMLResults
+  getJSONResults
   return
 fi
 
@@ -56,4 +56,4 @@ fi
 
 addResult "" "" "$NAME connected" "$INTERFACE ($MAC)" "$ICON_ETH"
 
-getXMLResults
+getJSONResults

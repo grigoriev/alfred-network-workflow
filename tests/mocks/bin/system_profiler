@@ -1,0 +1,41 @@
+#!/bin/bash
+# Mock of system_profiler SPAirPortDataType. MOCK_SPA toggles the case.
+case "$MOCK_SPA" in
+  empty) exit 0 ;;
+  redacted)
+    cat <<'DATA'
+Wi-Fi:
+
+      Interfaces:
+        en0:
+          Current Network Information:
+            <redacted>:
+              Channel: 6 (2GHz, 20MHz)
+              Security: None
+          Other Local Wi-Fi Networks:
+            <redacted>:
+              Channel: 40 (5GHz, 40MHz)
+              Security: WPA2 Personal
+DATA
+    ;;
+  *)
+    cat <<'DATA'
+Wi-Fi:
+
+      Interfaces:
+        en0:
+          Status: Connected
+          Current Network Information:
+            HomeNet:
+              PHY Mode: 802.11ax
+              Channel: 36 (5GHz, 80MHz)
+              Security: WPA2 Personal
+              Signal / Noise: -45 dBm / -90 dBm
+          Other Local Wi-Fi Networks:
+            CoffeeShop:
+              PHY Mode: 802.11ac
+              Channel: 40 (5GHz, 40MHz)
+              Security: None
+DATA
+    ;;
+esac
