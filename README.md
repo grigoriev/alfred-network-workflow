@@ -14,17 +14,17 @@ Alfred [Powerpack](https://www.alfredapp.com/powerpack/) is required.
 
 ## Usage
 
-Type `net` to see every command in one place, then press <kbd>Tab</kbd> to drill into one. Or use a command keyword directly:
+Everything lives under one keyword. Type `net` to see the command catalog, then keep typing (`net v`) or press <kbd>Tab</kbd> to drill into a command.
 
-| Keyword    | Action                                          |
-| ---------- | ----------------------------------------------- |
-| `net`      | Hub: list all commands and updates.             |
-| `wifi`     | Show Wi-Fi info, toggle Wi-Fi on or off.        |
-| `eth`      | Show Ethernet info when connected.              |
-| `wifilist` | Scan for Wi-Fi networks and connect.            |
-| `vpn`      | List configured VPNs and connect.               |
-| `dns`      | List and change DNS for the primary connection. |
-| `update`   | Check for and install workflow updates.         |
+| Command        | Action                                          |
+| -------------- | ----------------------------------------------- |
+| `net`          | List all commands.                              |
+| `net wifi`     | Show Wi-Fi info, toggle Wi-Fi on or off.        |
+| `net eth`      | Show Ethernet info when connected.              |
+| `net wifilist` | Scan for Wi-Fi networks and connect.            |
+| `net vpn`      | List configured VPNs and connect.               |
+| `net dns`      | List and change DNS for the primary connection. |
+| `net update`   | Check for and install workflow updates.         |
 
 <p align="center">
 <img src="https://raw.githubusercontent.com/grigoriev/alfred-network-workflow/master/screenshots/wifi-preview.png" alt="wifi" width="600">

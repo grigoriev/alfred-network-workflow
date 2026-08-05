@@ -35,13 +35,20 @@ addVariable() {
 # $7 autocomplete
 ###############################################################################
 addResult() {
+  # Router subcommands set ARG_PREFIX so a selected item's arg routes back
+  # through the "net" keyword (e.g. "Off" becomes "wifi Off").
+  local ARG="$2"
+  if [ -n "$ARG_PREFIX" ] && [ -n "$ARG" ]; then
+    ARG="$ARG_PREFIX$ARG"
+  fi
+
   local ITEM="{"
   if [ -n "$1" ]; then
     ITEM+="\"uid\":\"$(jsonEncode "$1")\","
   fi
   ITEM+="\"title\":\"$(jsonEncode "$3")\","
   ITEM+="\"subtitle\":\"$(jsonEncode "$4")\","
-  ITEM+="\"arg\":\"$(jsonEncode "$2")\","
+  ITEM+="\"arg\":\"$(jsonEncode "$ARG")\","
   ITEM+="\"icon\":{\"path\":\"$(jsonEncode "$5")\"},"
   if [ "$6" = "no" ]; then
     ITEM+="\"valid\":false,"

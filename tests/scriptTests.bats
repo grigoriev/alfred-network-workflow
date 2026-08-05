@@ -10,17 +10,32 @@ setup() {
   export alfred_workflow_data="$BATS_TEST_TMPDIR/data"
 }
 
-# --- net.sh (hub) ----------------------------------------------------------
+# --- net.sh (router) -------------------------------------------------------
 
-@test "net.sh: hub lists every command with autocomplete" {
-  run bash -c '. src/net.sh'
+@test "net.sh: catalog lists every command" {
+  run bash -c '. src/net.sh list ""'
   [ "$status" -eq 0 ]
   [[ "$output" =~ '"autocomplete":"wifi ' ]]
-  [[ "$output" =~ '"autocomplete":"eth ' ]]
-  [[ "$output" =~ '"autocomplete":"wifilist ' ]]
   [[ "$output" =~ '"autocomplete":"vpn ' ]]
-  [[ "$output" =~ '"autocomplete":"dns ' ]]
   [[ "$output" =~ '"autocomplete":"update ' ]]
+}
+
+@test "net.sh: catalog filters by subcommand prefix" {
+  run bash -c '. src/net.sh list "v"'
+  [[ "$output" =~ "VPN" ]]
+  [[ ! "$output" =~ "Wi-Fi" ]]
+}
+
+@test "net.sh: dispatches a subcommand and prefixes item args" {
+  run bash -c '. src/net.sh list "vpn"'
+  [[ "$output" =~ "Test-VPN" ]]
+  [[ "$output" =~ '"arg":"vpn Test-VPN"' ]]
+}
+
+@test "net.sh: run dispatches the action to the subcommand" {
+  export MOCK_VPN_STATUS=Connected
+  run bash -c '. src/net.sh run "vpn Test-VPN"'
+  [ "$status" -eq 0 ]
 }
 
 # --- wifi.sh ---------------------------------------------------------------
