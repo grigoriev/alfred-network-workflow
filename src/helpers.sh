@@ -346,8 +346,3 @@ getScanDetails() {
 
   echo "$PRIORITY"~"$SSID"~""~"$RSSI"~"$CHANNEL"~"$SECURITY"~"$AP_ICON"
 }
-
-# Open the macOS Location Services settings pane
-openLocationSettings() {
-  open "x-apple.systempreferences:com.apple.preference.security?Privacy_LocationServices"
-}

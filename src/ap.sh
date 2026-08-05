@@ -9,11 +9,6 @@ if [ "$1" != "" ]; then
     exit
   fi
 
-  if [ "$1" == "LOCATION" ]; then
-    openLocationSettings
-    exit
-  fi
-
   # Extract password for AP, which is needed by networksetup.
   # security prints the password to stderr, so send stderr down the pipe
   # and discard stdout. The redirect order is intentional.
@@ -51,11 +46,14 @@ NETWORKS=$(parseScanResults "$SCAN" "$INTERFACE")
 if [ "$NETWORKS" == "" ]; then
   # Handle no wifi access points found
   addResult "" "Null" "No access points found" "" "$ICON_WIFI_ERROR"
-elif [ "$(echo "$NETWORKS" | grep -vc '<redacted>')" == "0" ]; then
-  # macOS hides network names until the workflow is granted Location access
-  addResult "" "LOCATION" "Grant Location access to see Wi-Fi names" \
-    "Press ⏎ to open Location Services settings" "$ICON_WIFI_ERROR"
 else
+  # macOS hides network names unless the app reading Wi-Fi has Location
+  # access. Channel, security and signal still show for each network.
+  if echo "$NETWORKS" | grep -q '<redacted>'; then
+    addResult "" "" "Wi-Fi names hidden by macOS" \
+      "Enable Location access for Alfred to reveal them" "$ICON_WIFI_ERROR" "no"
+  fi
+
   PARSED_APS=''
 
   # Build details from each scan tuple
@@ -78,7 +76,12 @@ else
       if [ "${ARRAY[5]}" != "" ]; then
         SUBTITLE="$SUBTITLE, ${ARRAY[5]}"
       fi
-      addResult "" "${ARRAY[1]}" "${ARRAY[1]}" "$SUBTITLE" "${ARRAY[6]}"
+      if [ "${ARRAY[1]}" == "<redacted>" ]; then
+        # No usable name to connect with, so make it a non-actionable row
+        addResult "" "" "Hidden network" "$SUBTITLE" "${ARRAY[6]}" "no"
+      else
+        addResult "" "${ARRAY[1]}" "${ARRAY[1]}" "$SUBTITLE" "${ARRAY[6]}"
+      fi
     fi
   done <<< "$PARSED_APS"
 fi
