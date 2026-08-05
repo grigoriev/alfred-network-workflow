@@ -34,7 +34,7 @@ while read -r LINE; do
   DNSCONFIG=$(parseDNSLine "$LINE" "$DNSSTRING")
   IFS='~' read -r -a ARRAY <<< "$DNSCONFIG"
 
-  if [ "$ARRAY" != "" ]; then
+  if [ "${ARRAY[0]}" != "" ]; then
     addResult "" "${ARRAY[1]}" "${ARRAY[0]}" "${ARRAY[1]}" "${ARRAY[2]}"
   fi
 done < "$FILE"

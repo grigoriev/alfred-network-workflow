@@ -105,7 +105,7 @@ getEthernetMac() {
 # $! = String
 getPrimaryInterfaceName() {
   local INTERFACE=$(getEthernetInterface)
-  if [ $(getEthernetState "$INTERFACE") != 0 ]; then
+  if [ "$(getEthernetState "$INTERFACE")" != 0 ]; then
     echo "$(getEthernetName)"
   else
     echo "$(getWifiName)"
