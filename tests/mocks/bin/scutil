@@ -1,0 +1,12 @@
+#!/bin/bash
+# Mock of scutil --nc <cmd>.
+case "$2" in
+  list)
+    echo "Available network connection services in the current set (*=enabled):"
+    echo '* (Connected)   65F5A798-4B98-4DA1-87D8-9D605FFF6188 PPP --> L2TP       "Test-VPN"                      [PPP:L2TP]'
+    ;;
+  status) echo "${MOCK_VPN_STATUS:-Connected}" ;;
+  show) echo "PPP:L2TP" ;;
+  start|stop) echo "scutil $*" ;;
+  *) echo "scutil $*" ;;
+esac

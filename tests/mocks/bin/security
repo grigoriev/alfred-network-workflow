@@ -1,0 +1,3 @@
+#!/bin/bash
+# Mock of security find-generic-password: password goes to stderr.
+echo 'password: "secret"' >&2

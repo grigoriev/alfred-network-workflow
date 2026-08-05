@@ -1,0 +1,21 @@
+#!/bin/bash
+# Mock of ipconfig getsummary <iface>. MOCK_IP toggles redaction.
+if [ "$MOCK_IP" == "redacted" ]; then
+  cat <<'DATA'
+<dictionary> {
+  BSSID : <redacted>
+  InterfaceType : WiFi
+  SSID : <redacted>
+  Security : NONE
+}
+DATA
+else
+  cat <<'DATA'
+<dictionary> {
+  BSSID : c8:07:19:2c:00:6f
+  InterfaceType : WiFi
+  SSID : HomeNet
+  Security : WPA2
+}
+DATA
+fi
