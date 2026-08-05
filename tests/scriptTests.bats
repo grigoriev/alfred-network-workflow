@@ -39,6 +39,7 @@ setup() {
 }
 
 @test "net.sh: list wifi prefixes item args" {
+  export MOCK_HELPER=names
   run bash -c '. src/net.sh list "wifi"'
   [[ "$output" =~ '"arg":"wifi Off"' ]]
 }
@@ -91,12 +92,20 @@ STUB
 # --- wifi.sh ---------------------------------------------------------------
 
 @test "wifi.sh: show connected info" {
+  export MOCK_HELPER=names
   run bash -c '. src/wifi.sh'
   [ "$status" -eq 0 ]
   [[ "$output" =~ "192.168.1.100" ]]
   [[ "$output" =~ "HomeNet" ]]
   [[ "$output" =~ "203.0.113.5" ]]
   [[ "$output" =~ "Turn Wi-Fi Off" ]]
+}
+
+@test "wifi.sh: empty cache shows a checking placeholder" {
+  # With no cached scan the first pass shows a placeholder and reruns
+  run bash -c '. src/wifi.sh'
+  [[ "$output" =~ "Checking Wi-Fi" ]]
+  [[ "$output" =~ '"rerun"' ]]
 }
 
 @test "wifi.sh: wifi off shows turn on" {
@@ -123,6 +132,7 @@ STUB
 
 @test "wifi.sh: redacted ssid shows an actionable hint" {
   export MOCK_SPA=redacted
+  export wifi_checking=1   # skip the cache placeholder, go to the live scan
   run bash -c '. src/wifi.sh'
   [[ "$output" =~ "hidden by macOS" ]]
   [[ "$output" =~ '"arg":"LOCATION"' ]]
@@ -136,6 +146,7 @@ STUB
 
 @test "wifi.sh: shows IPv6 when present" {
   export MOCK_IPV6=yes
+  export MOCK_HELPER=names
   run bash -c '. src/wifi.sh'
   [[ "$output" =~ "fe80::abcd" ]]
 }

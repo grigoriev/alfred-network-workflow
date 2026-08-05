@@ -315,18 +315,29 @@ getActiveScanSSID() {
 # Scan Wi-Fi networks. Reads real SSIDs with CoreWLAN through osascript, whose
 # Apple-signed context is allowed to on macOS 14+ (no prompt or signing needed).
 # Falls back to system_profiler (redacted names) if that returns nothing.
+# A live scan also refreshes the OS scan cache that "cached" mode reads.
 # $1 = Wi-Fi interface name
+# $2 = mode: "cached" for the instant OS cache, empty for a live scan
 # $! = JSON array of { section, ssid, channel, security, rssi }
 scanNetworks() {
   local SRC="src/wifi-scan.js"
+  local MODE="$2"
 
   if [ -f "$SRC" ]; then
     local OUT
-    OUT=$(osascript -l JavaScript "$SRC" 2>/dev/null)
+    OUT=$(osascript -l JavaScript "$SRC" "$MODE" 2>/dev/null)
     if [ -n "$OUT" ] && [ "$OUT" != "[]" ]; then
       echo "$OUT"
       return
     fi
+  fi
+
+  # An empty cache is expected. Return nothing so the caller can show a
+  # placeholder and rerun with a live scan, instead of falling back to
+  # system_profiler and its redacted names.
+  if [ "$MODE" == "cached" ]; then
+    echo "[]"
+    return
   fi
 
   parseScanResults "$(system_profiler SPAirPortDataType 2>/dev/null)" "$1"

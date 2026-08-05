@@ -6,6 +6,12 @@
 // The connected network is marked "current" by matching the interface channel
 // and closest signal, because its SSID is not otherwise exposed.
 //
+// The first argument picks the source:
+//   (default)  a live scan, which takes a few seconds (net wifilist).
+//   "cached"   the last scan the OS cached, which is instant and enough to
+//              read the current network name (net wifi). Returns an empty list
+//              when the cache is empty, so the caller can show a placeholder.
+//
 // Set WIFI_SCAN_TEST to a JSON {networks, curChan, curRssi} to feed test data
 // instead of scanning, so the selection and formatting logic stays testable.
 ObjC.import('CoreWLAN');
@@ -20,49 +26,74 @@ function security(n) {
   return 'Secured';
 }
 
+// Turn an NSSet of CWNetwork into [{ssid, ch, sec, rssi}].
+function mapNetworks(nets) {
+  var out = [];
+  if (nets.isNil()) return out;
+  var arr = nets.allObjects;
+  for (var i = 0; i < arr.count; i++) {
+    var n = arr.objectAtIndex(i);
+    out.push({
+      ssid: n.ssid.isNil() ? '' : n.ssid.js,
+      ch: n.wlanChannel.isNil() ? 0 : Number(n.wlanChannel.channelNumber),
+      sec: security(n),
+      rssi: Number(n.rssiValue)
+    });
+  }
+  return out;
+}
+
 // Read Wi-Fi state, either from the test hook or CoreWLAN.
 // Returns { networks: [{ssid, ch, sec, rssi}], curChan, curRssi }.
-function scan() {
+function scan(mode) {
   var test = $.NSProcessInfo.processInfo.environment.objectForKey('WIFI_SCAN_TEST');
   if (!test.isNil()) return JSON.parse(test.js);
 
   var iface = $.CWWiFiClient.sharedWiFiClient.interface;
   if (iface.isNil()) return { networks: [], curChan: -1, curRssi: 0 };
 
-  var networks = [];
-  var err = $();
-  var nets = iface.scanForNetworksWithNameError(undefined, err);
-  if (!nets.isNil()) {
-    var arr = nets.allObjects;
-    for (var i = 0; i < arr.count; i++) {
-      var n = arr.objectAtIndex(i);
-      networks.push({
-        ssid: n.ssid.isNil() ? '' : n.ssid.js,
-        ch: n.wlanChannel.isNil() ? 0 : n.wlanChannel.channelNumber,
-        sec: security(n),
-        rssi: n.rssiValue
-      });
-    }
+  var networks;
+  if (mode === 'cached') {
+    networks = mapNetworks(iface.cachedScanResults);
+  }
+  if (!networks || networks.length === 0) {
+    var err = $();
+    networks = mapNetworks(iface.scanForNetworksWithNameError(undefined, err));
   }
   return {
     networks: networks,
-    curChan: iface.wlanChannel.isNil() ? -1 : iface.wlanChannel.channelNumber,
-    curRssi: iface.rssiValue
+    curChan: iface.wlanChannel.isNil() ? -1 : Number(iface.wlanChannel.channelNumber),
+    curRssi: Number(iface.rssiValue)
   };
 }
 
-// Mark the connected network (same channel, closest signal) and build JSON.
-function build(data) {
-  var list = data.networks;
-  var current = -1, bestDiff = 1e9;
-  if (data.curChan !== -1) {
-    for (var i = 0; i < list.length; i++) {
-      if (list[i].ch === data.curChan) {
-        var diff = Math.abs(list[i].rssi - data.curRssi);
-        if (diff < bestDiff) { bestDiff = diff; current = i; }
-      }
-    }
+// Identify the connected network. Its SSID is redacted, so match on the
+// interface channel. Dense areas (a hotel) put many APs on one channel, so:
+//   1. never pick an empty (hidden) SSID,
+//   2. prefer a saved network, because you connect to ones you have joined,
+//   3. break ties by the signal closest to the interface RSSI.
+// Returns the index in list, or -1 when nothing usable matches.
+function pickCurrent(list, curChan, curRssi, saved) {
+  if (curChan === -1) return -1;
+  var cands = [];
+  for (var i = 0; i < list.length; i++) {
+    if (list[i].ch === curChan && list[i].ssid !== '') cands.push(i);
   }
+  if (cands.length === 0) return -1;
+  var pool = cands.filter(function (i) { return saved.indexOf(list[i].ssid) !== -1; });
+  if (pool.length === 0) pool = cands;
+  var best = -1, bestDiff = 1e9;
+  for (var k = 0; k < pool.length; k++) {
+    var diff = Math.abs(list[pool[k]].rssi - curRssi);
+    if (diff < bestDiff) { bestDiff = diff; best = pool[k]; }
+  }
+  return best;
+}
+
+// Mark the connected network and build the JSON array.
+function build(data, saved) {
+  var list = data.networks;
+  var current = pickCurrent(list, data.curChan, data.curRssi, saved || []);
   var out = list.map(function (e, i) {
     return {
       section: (i === current) ? 'current' : 'other',
@@ -75,6 +106,14 @@ function build(data) {
   return JSON.stringify(out);
 }
 
-function run() {
-  return build(scan());
+// Saved (preferred) network names, passed from the shell as newline text.
+function savedNetworks() {
+  var v = $.NSProcessInfo.processInfo.environment.objectForKey('WIFI_SAVED');
+  if (v.isNil()) return [];
+  return v.js.split('\n').map(function (s) { return s.trim(); })
+    .filter(function (s) { return s !== ''; });
+}
+
+function run(argv) {
+  return build(scan(argv[0]), savedNetworks());
 }

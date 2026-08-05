@@ -43,8 +43,10 @@ fi
 
 # Scan with the CoreWLAN helper (real names) or system_profiler (redacted).
 # NETWORKS is a JSON array of { section, ssid, channel, security, rssi }.
-NETWORKS=$(scanNetworks "$INTERFACE")
+# Export the saved networks so the scanner can pick the connected one.
 SAVED_APS=$(networksetup -listpreferredwirelessnetworks "$INTERFACE")
+export WIFI_SAVED="$SAVED_APS"
+NETWORKS=$(scanNetworks "$INTERFACE")
 
 if [ "$(jq 'length' <<< "$NETWORKS")" == "0" ]; then
   # Handle no wifi access points found
