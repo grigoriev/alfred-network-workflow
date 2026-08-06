@@ -3,6 +3,8 @@
 ![CI](https://github.com/grigoriev/alfred-network-workflow/actions/workflows/ci.yml/badge.svg)
 [![Release](https://img.shields.io/github/v/release/grigoriev/alfred-network-workflow)](https://github.com/grigoriev/alfred-network-workflow/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=grigoriev_alfred-network-workflow&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=grigoriev_alfred-network-workflow)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=grigoriev_alfred-network-workflow&metric=coverage)](https://sonarcloud.io/summary/new_code?id=grigoriev_alfred-network-workflow)
 
 Alfred workflow that shows and changes your network settings: Wi-Fi, Ethernet, VPN and DNS.
 
