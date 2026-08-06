@@ -73,7 +73,7 @@ The self-update logic is shared, not vendored. `make build` fetches
 
 ## Releases
 
-Pushing a `v*` tag builds `Network.alfredworkflow` and publishes a GitHub Release with the asset attached. The tag also sets the workflow version.
+Run the **Bump Version & Release** workflow from the Actions tab and pick `patch`, `minor` or `major`. It bumps the version, tags it, and the release workflow builds `Network.alfredworkflow` and publishes a GitHub Release with the asset attached. Pushing a `v*` tag by hand does the same.
 
 ## Credits
 
