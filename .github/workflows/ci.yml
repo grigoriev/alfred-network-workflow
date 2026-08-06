@@ -40,6 +40,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+      # kcov (Linux-only) mangles a few jq-heavy tests that pass on macOS and
+      # under bats directly, so `|| true` keeps coverage flowing. Those lines are
+      # still validated by the macOS test job; coverage lands around 90%.
       - name: Run tests under kcov
         run: |
           docker run --rm -v "$PWD:$PWD" -w "$PWD" kcov/kcov:latest bash -c \
