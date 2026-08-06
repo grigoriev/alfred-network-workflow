@@ -1,4 +1,8 @@
-# <img src="https://raw.githubusercontent.com/grigoriev/alfred-network-workflow/master/icon.png" alt="network" width="32"> Alfred Network Workflow ![CI](https://github.com/grigoriev/alfred-network-workflow/actions/workflows/ci.yml/badge.svg)
+# <img src="https://raw.githubusercontent.com/grigoriev/alfred-network-workflow/main/icon.png" alt="network" width="32"> Alfred Network Workflow
+
+![CI](https://github.com/grigoriev/alfred-network-workflow/actions/workflows/ci.yml/badge.svg)
+[![Release](https://img.shields.io/github/v/release/grigoriev/alfred-network-workflow)](https://github.com/grigoriev/alfred-network-workflow/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Alfred workflow that shows and changes your network settings: Wi-Fi, Ethernet, VPN and DNS.
 
@@ -27,8 +31,8 @@ Everything lives under one keyword. Type `net` to see the command catalog, then 
 | `net update`   | Check for and install workflow updates.         |
 
 <p align="center">
-<img src="https://raw.githubusercontent.com/grigoriev/alfred-network-workflow/master/screenshots/wifi-preview.png" alt="wifi" width="600">
-<img src="https://raw.githubusercontent.com/grigoriev/alfred-network-workflow/master/screenshots/wifilist-preview.png" alt="wifilist" width="600">
+<img src="https://raw.githubusercontent.com/grigoriev/alfred-network-workflow/main/screenshots/wifi-preview.png" alt="wifi" width="600">
+<img src="https://raw.githubusercontent.com/grigoriev/alfred-network-workflow/main/screenshots/wifilist-preview.png" alt="wifilist" width="600">
 </p>
 
 ## macOS 14 and later
@@ -75,4 +79,4 @@ Pushing a `v*` tag builds `Network.alfredworkflow` and publishes a GitHub Releas
 
 A fork of the original workflow by [Martin Rodalgaard](https://github.com/mrodalgaard/alfred-network-workflow). Contributions, bug reports and feature requests are welcome.
 
-Licensed under the MIT License. See [LICENSE.md](LICENSE.md).
+Licensed under the MIT License. See [LICENSE](LICENSE).
