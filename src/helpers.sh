@@ -343,47 +343,56 @@ scanNetworks() {
   parseScanResults "$(system_profiler SPAirPortDataType 2>/dev/null)" "$1"
 }
 
-# Annotate a scan network with its priority and icon.
-# $1 = network JSON { section, ssid, channel, security, rssi }
-# $2 = List of favorite access points (optional)
-# $! = JSON { priority, ssid, channel, security, rssi, icon }
-getScanDetails() {
-  local SECTION SSID CHANNEL SECURITY RSSI
-  { read -r SECTION; read -r SSID; read -r CHANNEL; read -r SECURITY; read -r RSSI; } \
-    < <(jq -r '.section, .ssid, .channel, .security, .rssi' <<< "$1")
+# Build the Alfred items for a Wi-Fi scan in a single jq pass. Marks the
+# connected network (active icon, top priority), starred saved networks, and
+# open vs locked networks, sorts by priority, and formats each subtitle.
+# Doing this in one jq call, instead of several per network, keeps a dense
+# scan (a hotel) instant. Item args use ARG_PREFIX, like addResult.
+# Only the scan's "current" section marks the connected network; matching by
+# SSID would flag every access point that shares the name.
+# $1 = networks JSON array { section, ssid, channel, security, rssi }
+# $2 = saved/preferred networks (newline text, optional)
+# $! = JSON array of Alfred items, sorted by priority
+buildWifiItems() {
+  local saved
+  saved=$(printf '%s' "$2" | jq -Rn '[inputs | gsub("^[ \t]+|[ \t]+$";"") | select(length > 0)]')
 
-  if [ "$SSID" == "" ]; then
-    return
-  fi
-
-  local FAVORITED PRIORITY AP_ICON
-  FAVORITED=$(listContains "$2" "$SSID")
-  PRIORITY=$PRIORITY_LOW
-
-  # Only the scan's "current" section marks the connected network. Matching by
-  # SSID would flag every access point that shares the name (e.g. a hotel).
-  if [ "$SECTION" == "current" ]; then
-    AP_ICON=$ICON_WIFI_ACTIVE_
-    PRIORITY=$PRIORITY_HIGH
-  elif [ "$FAVORITED" != "" ]; then
-    AP_ICON=$ICON_WIFI_STAR_
-    PRIORITY=$PRIORITY_MEDIUM
-  elif [ "$SECURITY" == "None" ] || [ "$SECURITY" == "" ]; then
-    AP_ICON=$ICON_WIFI_
-  else
-    AP_ICON=$ICON_WIFI_LOCK_
-  fi
-
-  AP_ICON=$AP_ICON$(getScanStrength "$RSSI")$ICON_END
-
-  jq -nc \
-    --argjson priority "$PRIORITY" \
-    --arg ssid "$SSID" \
-    --argjson channel "${CHANNEL:-0}" \
-    --arg security "$SECURITY" \
-    --argjson rssi "${RSSI:-0}" \
-    --arg icon "$AP_ICON" \
-    '{priority:$priority, ssid:$ssid, channel:$channel, security:$security, rssi:$rssi, icon:$icon}'
+  jq -c \
+    --argjson saved "$saved" \
+    --arg prefix "$ARG_PREFIX" \
+    --argjson high "$PRIORITY_HIGH" \
+    --argjson medium "$PRIORITY_MEDIUM" \
+    --argjson low "$PRIORITY_LOW" \
+    --arg active "$ICON_WIFI_ACTIVE_" \
+    --arg star "$ICON_WIFI_STAR_" \
+    --arg open "$ICON_WIFI_" \
+    --arg lock "$ICON_WIFI_LOCK_" \
+    --arg end "$ICON_END" '
+    def strength(r):
+      if r == null then 4
+      elif r < -80 then 1
+      elif r < -70 then 2
+      elif r < -60 then 3
+      else 4 end;
+    [ .[]
+      | select(.ssid != "")
+      | . as $n
+      | (if $n.section == "current" then {p: $high, base: $active}
+         elif ($saved | index($n.ssid)) then {p: $medium, base: $star}
+         elif ($n.security == "None" or $n.security == "") then {p: $low, base: $open}
+         else {p: $low, base: $lock} end) as $c
+      | {p: $c.p, n: $n, icon: ($c.base + (strength($n.rssi) | tostring) + $end)} ]
+    | sort_by(.p)
+    | [ .[]
+        | .n as $n
+        | {title: (if $n.ssid == "<redacted>" then "Hidden network" else $n.ssid end),
+           subtitle: (
+             (if ($n.rssi != 0 and $n.rssi != null) then "RSSI " + ($n.rssi | tostring) + " dBm, " else "" end)
+             + "channel " + ($n.channel | tostring)
+             + (if ($n.security != "" and $n.security != null) then ", " + $n.security else "" end)),
+           arg: (if $n.ssid == "<redacted>" then "" else $prefix + $n.ssid end),
+           valid: ($n.ssid != "<redacted>"),
+           icon: {path: .icon}} ]' <<< "$1"
 }
 
 # Open the macOS Location Services settings pane

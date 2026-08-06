@@ -55,43 +55,55 @@ load variables
   [ "$output" == 4 ]
 }
 
-# Build a network JSON object for getScanDetails
-netjson() { # section ssid channel security rssi
+# Build a JSON networks array from one network for buildWifiItems
+net1() { # section ssid channel security rssi
   jq -nc --arg s "$1" --arg ssid "$2" --argjson ch "$3" --arg sec "$4" --argjson rssi "$5" \
-    '{section:$s, ssid:$ssid, channel:$ch, security:$sec, rssi:$rssi}'
+    '[{section:$s, ssid:$ssid, channel:$ch, security:$sec, rssi:$rssi}]'
 }
 
-@test "getScanDetails: current network is marked active" {
-  run getScanDetails "$(netjson current HomeNet 36 "WPA2 Personal" -45)"
-  echo "$output" | jq -e ".priority == $PRIORITY_HIGH and .ssid == \"HomeNet\" and .channel == 36 and .icon == \"$ICON_WIFI_ACTIVE\"" >/dev/null
+@test "buildWifiItems: current network gets the active icon and sorts first" {
+  NETS=$(jq -sc 'add' <<< "$(net1 current HomeNet 36 "WPA2 Personal" -45; net1 other CoffeeShop 40 None -50)")
+  run buildWifiItems "$NETS"
+  echo "$output" | jq -e '.[0].title == "HomeNet" and .[0].icon.path == "media/wifi-active-4.png"' >/dev/null
+  echo "$output" | jq -e '.[0].subtitle == "RSSI -45 dBm, channel 36, WPA2 Personal"' >/dev/null
 }
 
-@test "getScanDetails: open network uses a plain icon" {
-  run getScanDetails "$(netjson other CoffeeShop 40 None -50)"
-  echo "$output" | jq -e ".ssid == \"CoffeeShop\" and .icon == \"$ICON_WIFI_4\"" >/dev/null
+@test "buildWifiItems: open network uses a plain icon and is actionable" {
+  run buildWifiItems "$(net1 other CoffeeShop 40 None -50)"
+  echo "$output" | jq -e '.[0].title == "CoffeeShop" and .[0].icon.path == "media/wifi-4.png" and .[0].valid == true' >/dev/null
 }
 
-@test "getScanDetails: secured network uses a lock icon" {
-  run getScanDetails "$(netjson other "Neighbor 5G" 132 "WPA2 Personal" -72)"
-  echo "$output" | jq -e ".priority == $PRIORITY_LOW and .icon == \"$ICON_WIFI_LOCK_2\"" >/dev/null
+@test "buildWifiItems: secured network uses a lock icon" {
+  run buildWifiItems "$(net1 other "Neighbor 5G" 132 "WPA2 Personal" -72)"
+  echo "$output" | jq -e '.[0].icon.path == "media/wifi-lock-2.png"' >/dev/null
 }
 
-@test "getScanDetails: only the current section is active" {
-  run getScanDetails "$(netjson other HomeNet 6 None -50)"
-  echo "$output" | jq -e ".priority == $PRIORITY_LOW" >/dev/null
+@test "buildWifiItems: only the current section is active" {
+  run buildWifiItems "$(net1 other HomeNet 6 None -50)"
+  echo "$output" | jq -e '.[0].icon.path == "media/wifi-4.png"' >/dev/null
 }
 
-@test "getScanDetails: favorited network is marked with a star" {
-  AP_LIST="Neighbor 5G
+@test "buildWifiItems: saved network is marked with a star" {
+  SAVED="Neighbor 5G
   Random other AP"
-
-  run getScanDetails "$(netjson other "Neighbor 5G" 132 "WPA2 Personal" -72)" "$AP_LIST"
-  echo "$output" | jq -e ".priority == $PRIORITY_MEDIUM and .icon == \"$ICON_WIFI_STAR_2\"" >/dev/null
+  run buildWifiItems "$(net1 other "Neighbor 5G" 132 "WPA2 Personal" -72)" "$SAVED"
+  echo "$output" | jq -e '.[0].icon.path == "media/wifi-star-2.png"' >/dev/null
 }
 
-@test "getScanDetails: filter empty SSIDs" {
-  run getScanDetails "$(netjson other "" 40 None -50)"
-  [ "$output" == "" ]
+@test "buildWifiItems: empty SSIDs are skipped" {
+  run buildWifiItems "$(net1 other "" 40 None -50)"
+  [ "$output" == "[]" ]
+}
+
+@test "buildWifiItems: redacted network is a non-actionable hidden row" {
+  run buildWifiItems "$(net1 current "<redacted>" 36 "WPA2 Personal" -45)"
+  echo "$output" | jq -e '.[0].title == "Hidden network" and .[0].valid == false and .[0].arg == ""' >/dev/null
+}
+
+@test "buildWifiItems: item arg uses ARG_PREFIX" {
+  ARG_PREFIX="wifilist "
+  run buildWifiItems "$(net1 other CoffeeShop 40 None -50)"
+  echo "$output" | jq -e '.[0].arg == "wifilist CoffeeShop"' >/dev/null
 }
 
 @test "listContains: contains element" {
