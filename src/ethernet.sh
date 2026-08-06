@@ -24,13 +24,13 @@ MAC=$(get_ethernet_mac)
 NAME=$(get_ethernet_name)
 
 # Output IPv4
-IPv4=$(getIPv4 "$NETINFO")
+IPv4=$(get_ipv4 "$NETINFO")
 if [[ ! -z "$IPv4" ]]; then
   add_result "" "$IPv4" "$IPv4" "IPv4 address ($NETCONFIG)" "$ICON_ETH"
 fi
 
 # Output IPv6
-IPv6=$(getIPv6 "$NETINFO")
+IPv6=$(get_ipv6 "$NETINFO")
 if [[ "$IPv6" != "" ]]; then
   add_result "" "$IPv6" "$IPv6" "IPv6 address ($NETCONFIG)" "$ICON_ETH"
 fi

@@ -81,13 +81,13 @@ NETINFO=$(networksetup -getinfo "$NAME")
 NETCONFIG=$(get_connection_config "$NETINFO")
 
 # Output IPv4
-IPv4=$(getIPv4 "$NETINFO")
+IPv4=$(get_ipv4 "$NETINFO")
 if [[ "$IPv4" != "" ]]; then
   add_result "" "$IPv4" "$IPv4" "IPv4 address ($NETCONFIG)" "$ICON_WIFI"
 fi
 
 # Output IPv6
-IPv6=$(getIPv6 "$NETINFO")
+IPv6=$(get_ipv6 "$NETINFO")
 if [[ "$IPv6" != "" ]]; then
   add_result "" "$IPv6" "$IPv6" "IPv6 address ($NETCONFIG)" "$ICON_WIFI"
 fi

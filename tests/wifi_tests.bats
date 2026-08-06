@@ -32,18 +32,18 @@ load variables
   [ "$output" = "DHCP Configuration" ]
 }
 
-@test "getIPv4: get IPv4" {
-  run getIPv4 "$NETINFO"
+@test "get_ipv4: get IPv4" {
+  run get_ipv4 "$NETINFO"
   [ "$output" = "192.168.1.100" ]
 }
 
-@test "getIPv6: get non-existing IPv6" {
-  run getIPv6 "$NETINFO"
+@test "get_ipv6: get non-existing IPv6" {
+  run get_ipv6 "$NETINFO"
   [ "$output" = "" ]
 }
 
-@test "getIPv6: get existing IPv6" {
-  run getIPv6 "IPv6 IP address: fe80::1"
+@test "get_ipv6: get existing IPv6" {
+  run get_ipv6 "IPv6 IP address: fe80::1"
   [ "$output" = "fe80::1" ]
 }
 

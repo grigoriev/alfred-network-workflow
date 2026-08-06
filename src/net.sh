@@ -10,18 +10,19 @@
 #   list mode (Script Filter): . src/net.sh list "{query}"
 #   run mode  (Run Script):    . src/net.sh run  "{query}"
 
-MODE="$1"
-QUERY="$2"
-CMD="${QUERY%% *}"
-REST="${QUERY#"$CMD"}"
-REST="${REST# }"
+mode="$1"
+query="$2"
+cmd="${query%% *}"
+rest="${query#"$cmd"}"
+rest="${rest# }"
 
-SUBCOMMANDS="wifi eth wifilist vpn dns update"
+subcommands="wifi eth wifilist vpn dns update"
 
 is_subcommand() {
-  local s
-  for s in $SUBCOMMANDS; do
-    [[ "$s" == "$1" ]] && return 0
+  local target="$1"
+  local name
+  for name in $subcommands; do
+    [[ "$name" == "$target" ]] && return 0
   done
   return 1
 }
@@ -29,54 +30,60 @@ is_subcommand() {
 # Add a catalog entry when its subcommand matches the filter prefix
 # $1 subcommand  $2 filter  $3 title  $4 subtitle  $5 icon  $6 autocomplete
 cat_item() {
-  case "$1" in
-    "$2"*) add_result "" "" "$3" "$4" "$5" "no" "$6" ;;
+  local name="$1" filter="$2" title="$3" subtitle="$4" icon="$5" autocomplete="$6"
+  case "$name" in
+    "$filter"*) add_result "" "" "$title" "$subtitle" "$icon" "no" "$autocomplete" ;;
+    *) ;;
   esac
+  return 0
 }
 
 # Catalog of commands, optionally filtered by a subcommand prefix
 # $1 = filter (may be empty)
 catalog() {
-  local f="$1"
-  cat_item wifi     "$f" "Wi-Fi"      "Show Wi-Fi info and toggle it on or off"        "$ICON_WIFI" "wifi "
-  cat_item eth      "$f" "Ethernet"   "Show Ethernet info"                             "$ICON_ETH"  "eth "
-  cat_item wifilist "$f" "Wi-Fi List" "Scan for nearby Wi-Fi networks"                 "$ICON_WIFI" "wifilist "
-  cat_item vpn      "$f" "VPN"        "List configured VPNs and connect"               "$ICON_VPN"  "vpn "
-  cat_item dns      "$f" "DNS"        "List and change DNS for the primary connection" "$ICON_DNS"  "dns "
-  cat_item update   "$f" "Update"     "Check for and install workflow updates"         "icon.png"   "update "
+  local filter="$1"
+  cat_item wifi     "$filter" "Wi-Fi"      "Show Wi-Fi info and toggle it on or off"        "$ICON_WIFI" "wifi "
+  cat_item eth      "$filter" "Ethernet"   "Show Ethernet info"                             "$ICON_ETH"  "eth "
+  cat_item wifilist "$filter" "Wi-Fi List" "Scan for nearby Wi-Fi networks"                 "$ICON_WIFI" "wifilist "
+  cat_item vpn      "$filter" "VPN"        "List configured VPNs and connect"               "$ICON_VPN"  "vpn "
+  cat_item dns      "$filter" "DNS"        "List and change DNS for the primary connection" "$ICON_DNS"  "dns "
+  cat_item update   "$filter" "Update"     "Check for and install workflow updates"         "icon.png"   "update "
   get_json_results
+  return 0
 }
 
 # Run the action for a selected item
-if [[ "$MODE" == "run" ]]; then
-  case "$CMD" in
-    wifi)     . src/wifi.sh "$REST" ;;
-    eth)      . src/ethernet.sh "$REST" ;;
-    wifilist) . src/ap.sh "$REST" ;;
-    vpn)      . src/vpn.sh "$REST" ;;
-    dns)      . src/dns.sh "$REST" ;;
-    http://*|https://*) . src/update.sh "$QUERY" ;;
+if [[ "$mode" == "run" ]]; then
+  case "$cmd" in
+    wifi)     . src/wifi.sh "$rest" ;;
+    eth)      . src/ethernet.sh "$rest" ;;
+    wifilist) . src/ap.sh "$rest" ;;
+    vpn)      . src/vpn.sh "$rest" ;;
+    dns)      . src/dns.sh "$rest" ;;
+    http://*|https://*) . src/update.sh "$query" ;;
+    *) ;;
   esac
   exit
 fi
 
 # List mode
-if [[ -z "$CMD" ]]; then
+if [[ -z "$cmd" ]]; then
   catalog ""
-elif is_subcommand "$CMD"; then
-  if [[ "$CMD" == "update" ]]; then
+elif is_subcommand "$cmd"; then
+  if [[ "$cmd" == "update" ]]; then
     # The shared updater builds its own arg (a download URL), so no prefix
-    . src/update.sh "$REST"
+    . src/update.sh "$rest"
   else
-    ARG_PREFIX="$CMD "
-    case "$CMD" in
-      wifi)     . src/wifi.sh "$REST" ;;
-      eth)      . src/ethernet.sh "$REST" ;;
-      wifilist) . src/ap.sh "$REST" ;;
-      vpn)      . src/vpn.sh "$REST" ;;
-      dns)      . src/dns.sh "$REST" ;;
+    ARG_PREFIX="$cmd "
+    case "$cmd" in
+      wifi)     . src/wifi.sh "$rest" ;;
+      eth)      . src/ethernet.sh "$rest" ;;
+      wifilist) . src/ap.sh "$rest" ;;
+      vpn)      . src/vpn.sh "$rest" ;;
+      dns)      . src/dns.sh "$rest" ;;
+      *) ;;
     esac
   fi
 else
-  catalog "$CMD"
+  catalog "$cmd"
 fi

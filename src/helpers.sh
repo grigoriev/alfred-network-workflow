@@ -13,9 +13,9 @@ PRIORITY_LOW="5"
 # Trim string
 # $1 = Input string
 # $! = Trimmed string
-trim () {
-  str="$1"
-  match=" "
+trim() {
+  local str="$1"
+  local match=" "
   while [[ "${str:0:${#match}}" == "$match" ]]; do
     str="${str:${#match}:${#str}}"
   done
@@ -23,252 +23,279 @@ trim () {
     str="${str:0:$((${#str} - ${#match}))}"
   done
   echo "$str"
+  return 0
 }
 
 # Get wifi state as boolean
 # $1 = Wi-Fi interface name
-# $! = Boolean
 get_wifi_state() {
-  if [[ "$(networksetup -getairportpower "$1" | grep On)" != "" ]]; then
+  local interface="$1"
+  if [[ "$(networksetup -getairportpower "$interface" | grep On)" != "" ]]; then
     echo 1
   else
     echo 0
   fi
+  return 0
 }
 
 # Get ethernet state as boolean
 # $1 = Ethernet interface name
-# $! = Boolean
 get_ethernet_state() {
-  if [[ "$1" != "" ]]; then
+  local interface="$1"
+  if [[ "$interface" != "" ]]; then
     echo 1
   else
     echo 0
   fi
+  return 0
 }
 
 # Get wifi port name
 # $1 = networksetup -listallhardwareports
-# $! = String
 get_wifi_name() {
-  local LIST=${1-$(networksetup -listallhardwareports)}
-  local DETAILS=$(echo "$LIST" | grep -A 2 -E "$WIFI_REGEX")
-  echo "$DETAILS" | grep -Eo "AirPort|Wi-Fi"
+  local list="${1-$(networksetup -listallhardwareports)}"
+  local details
+  details=$(echo "$list" | grep -A 2 -E "$WIFI_REGEX")
+  echo "$details" | grep -Eo "AirPort|Wi-Fi"
+  return 0
 }
 
 # Get ethernet port name
 # $1 = networksetup -listallhardwareports
-# $! = String
 get_ethernet_name() {
-  local LIST=${1-$(networksetup -listallhardwareports)}
-  local DETAILS=$(echo "$LIST" | grep -A 2 -E "$ETHERNET_REGEX")
-  echo "$DETAILS" | awk '/Hardware / {print substr($0, index($0, $3))}'
+  local list="${1-$(networksetup -listallhardwareports)}"
+  local details
+  details=$(echo "$list" | grep -A 2 -E "$ETHERNET_REGEX")
+  echo "$details" | awk '/Hardware / {print substr($0, index($0, $3))}'
+  return 0
 }
 
 # Get wifi interface name
 # $1 = networksetup -listallhardwareports
-# $! = String
 get_wifi_interface() {
-  local LIST=${1-$(networksetup -listallhardwareports)}
-  local DETAILS=$(echo "$LIST" | grep -A 2 -E "$WIFI_REGEX")
-  echo "$DETAILS" | grep -m 1 -o -e en[0-9]
+  local list="${1-$(networksetup -listallhardwareports)}"
+  local details
+  details=$(echo "$list" | grep -A 2 -E "$WIFI_REGEX")
+  echo "$details" | grep -m 1 -o -e "en[0-9]"
+  return 0
 }
 
 # Get ethernet interface name
 # $1 = networksetup -listallhardwareports
-# $! = String
 get_ethernet_interface() {
-  local LIST=${1-$(networksetup -listallhardwareports)}
-  local DETAILS=$(echo "$LIST" | grep -A 2 -E "$ETHERNET_REGEX")
-  echo "$DETAILS" | grep -m 1 -o -e en[0-9]
+  local list="${1-$(networksetup -listallhardwareports)}"
+  local details
+  details=$(echo "$list" | grep -A 2 -E "$ETHERNET_REGEX")
+  echo "$details" | grep -m 1 -o -e "en[0-9]"
+  return 0
 }
 
 # Get wifi mac address
 # $1 = networksetup -listallhardwareports
-# $! = String
 get_wifi_mac() {
-  local LIST=${1-$(networksetup -listallhardwareports)}
-  local DETAILS=$(echo "$LIST" | grep -A 2 -E "$WIFI_REGEX")
-  echo "$DETAILS" | awk '/Ethernet Address: / {print substr($0, index($0, $3))}'
+  local list="${1-$(networksetup -listallhardwareports)}"
+  local details
+  details=$(echo "$list" | grep -A 2 -E "$WIFI_REGEX")
+  echo "$details" | awk '/Ethernet Address: / {print substr($0, index($0, $3))}'
+  return 0
 }
 
 # Get ethernet mac address
 # $1 = networksetup -listallhardwareports
-# $! = String
 get_ethernet_mac() {
-  local LIST=${1-$(networksetup -listallhardwareports)}
-  local DETAILS=$(echo "$LIST" | grep -A 2 -E "$ETHERNET_REGEX")
-  echo "$DETAILS" | awk '/Ethernet Address: / {print substr($0, index($0, $3))}'
+  local list="${1-$(networksetup -listallhardwareports)}"
+  local details
+  details=$(echo "$list" | grep -A 2 -E "$ETHERNET_REGEX")
+  echo "$details" | awk '/Ethernet Address: / {print substr($0, index($0, $3))}'
+  return 0
 }
 
 # Find name of primary connected network interface
-# $! = String
 get_primary_interface_name() {
-  local INTERFACE=$(get_ethernet_interface)
-  if [[ "$(get_ethernet_state "$INTERFACE")" != 0 ]]; then
-    echo "$(get_ethernet_name)"
+  local interface
+  interface=$(get_ethernet_interface)
+  if [[ "$(get_ethernet_state "$interface")" != 0 ]]; then
+    get_ethernet_name
   else
-    echo "$(get_wifi_name)"
+    get_wifi_name
   fi
+  return 0
 }
 
 # Extract connection configuration
 # $1 = networksetup -getinfo
-# $! = String
 get_connection_config() {
-  echo "$1" | grep 'Configuration$'
+  local info="$1"
+  echo "$info" | grep 'Configuration$'
+  return 0
 }
 
 # Extract IP4
 # $1 = networksetup -getinfo
-# $! = String
-getIPv4() {
-  echo "$1" | grep '^IP\saddress' \
+get_ipv4() {
+  local info="$1"
+  echo "$info" | grep '^IP\saddress' \
     | awk '/ address/ {print substr($0, index($0, $3))}'
+  return 0
 }
 
 # Extract IP6
 # $1 = networksetup -getinfo
-# $! = String
-getIPv6() {
-  local IPv6=$(echo "$1" \
-    | grep '^IPv6 IP address' \
+get_ipv6() {
+  local info="$1"
+  local ipv6
+  ipv6=$(echo "$info" | grep '^IPv6 IP address' \
     | awk '/ address/ {print substr($0, index($0, $4))}')
-
-  if [[ "$IPv6" == "none" ]]; then
+  if [[ "$ipv6" == "none" ]]; then
     echo ""
   else
-    echo "$IPv6"
+    echo "$ipv6"
   fi
+  return 0
 }
 
 # Extract a value from ipconfig getsummary output
 # $1 = `ipconfig getsummary <interface>` text
 # $2 = key (e.g. SSID, BSSID, Security)
-# $! = String
-# airport was removed in macOS 14.4, so ipconfig getsummary is the source.
 get_summary_value() {
-  echo "$1" | sed -n "s/^  $2 : //p" | head -n 1
+  local text="$1" key="$2"
+  echo "$text" | sed -n "s/^  $key : //p" | head -n 1
+  return 0
 }
 
 # Resolve global IP
 # $1 = Dig resolver address (optional)
-# $! = String
 get_global_ip() {
-  local RESOLVER=${1:-"myip.opendns.com @resolver1.opendns.com"}
-
-  local IP=$(dig -4 +time=2 +tries=1 +short $RESOLVER)
-  if [[ "$IP" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-    echo "$IP"
+  local resolver="${1:-myip.opendns.com @resolver1.opendns.com}"
+  local ip
+  # shellcheck disable=SC2086
+  ip=$(dig -4 +time=2 +tries=1 +short $resolver)
+  if [[ "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+    echo "$ip"
   fi
+  return 0
 }
 
 # Get connected VPN
 # $1 = scutil --nc list
-# $! = String
 get_vpn() {
-  echo "$1" | awk '/\/*.(Connected)/ {print $7}' | tr -d '"'
+  local list="$1"
+  echo "$list" | awk '/\/*.(Connected)/ {print $7}' | tr -d '"'
+  return 0
 }
 
 # Get VPN info
 # $1 = `scutil --nc list` lines
-# $! = Separated string of VPN info
 get_vpn_info() {
-  if [[ "$1" =~ \*[[:space:]]\(([a-zA-Z ]*)\)[[:space:]].*\"(.*)\".*\[(.*)\] ]]
-  then
-    STATE=${BASH_REMATCH[1]}
-    NAME=${BASH_REMATCH[2]}
-    TYPE=${BASH_REMATCH[3]}
+  local line="$1"
+  local state name type ap_icon
+  if [[ "$line" =~ \*[[:space:]]\(([a-zA-Z ]*)\)[[:space:]].*\"(.*)\".*\[(.*)\] ]]; then
+    state=${BASH_REMATCH[1]}
+    name=${BASH_REMATCH[2]}
+    type=${BASH_REMATCH[3]}
   fi
 
-  if [[ "$STATE" == "Connected" ]]; then
-    AP_ICON=$ICON_VPN_CONNECTED
+  if [[ "$state" == "Connected" ]]; then
+    ap_icon=$ICON_VPN_CONNECTED
   else
-    AP_ICON=$ICON_VPN
+    ap_icon=$ICON_VPN
   fi
 
-  echo "$STATE"~"$NAME"~"$TYPE"~"$AP_ICON"
+  echo "$state"~"$name"~"$type"~"$ap_icon"
+  return 0
 }
 
 # Get DNS info
 # $1 = `networksetup -getdnsservers <servicename>`
-# $! = String
 get_dns() {
-  if [[ "$1" != *"any DNS"* ]]; then
-    echo $1 | sed 's/ / \/ /g'
+  local servers="$1"
+  if [[ "$servers" != *"any DNS"* ]]; then
+    # Unquoted on purpose: collapse newlines and repeated spaces to single spaces.
+    # shellcheck disable=SC2086
+    echo $servers | sed 's/ / \/ /g'
   else
     echo ""
   fi
+  return 0
 }
 
 # Parse DNS info
 # $1 = line of dns config file
 # $2 = active dns list
-# $! = Separated string of dns config elements
 parse_dns_line() {
-  IFS=':' read -r -a ARRAY <<< "$1"
-  if [[ "${ARRAY[0]}" =~ ^# ]] || [[ "${ARRAY[0]}" == "" ]] || [[ "${ARRAY[1]}" == "" ]]; then
-    return
+  local line="$1" active="$2"
+  local array
+  IFS=':' read -r -a array <<< "$line"
+  if [[ "${array[0]}" =~ ^# ]] || [[ "${array[0]}" == "" ]] || [[ "${array[1]}" == "" ]]; then
+    return 0
   fi
 
-  local ID=$(trim "${ARRAY[0]}")
-  local DNS=$(echo "${ARRAY[1]}" | sed 's/ //g' | sed 's/,/ \/ /g')
-  local ICON=$ICON_DNS
+  local id dns icon
+  id=$(trim "${array[0]}")
+  dns=$(echo "${array[1]}" | sed 's/ //g' | sed 's/,/ \/ /g')
+  icon=$ICON_DNS
 
-  if [[ "$DNS" == "$2" ]]; then
-    ICON=$ICON_DNS_USED
-    ID="$ID (used)"
+  if [[ "$dns" == "$active" ]]; then
+    icon=$ICON_DNS_USED
+    id="$id (used)"
   fi
 
-  echo "$ID"~"$DNS"~"$ICON"
+  echo "$id"~"$dns"~"$icon"
+  return 0
 }
 
 # Get saved access point
 # $1 = networksetup -listpreferredwirelessnetworks
-# $! = Separated string of saved access points
 get_saved_aps() {
+  local input="$1"
+  local output="" line
   while read -r line; do
-    OUTPUT=$OUTPUT~$line
-  done <<< "$1"
-  echo "${OUTPUT:1}"
+    output=$output~$line
+  done <<< "$input"
+  echo "${output:1}"
+  return 0
 }
 
 # Check if list contains an element
 # $1 = List of elements
 # $2 = Element to check
-# $! = Boolean
 list_contains() {
-  while read -r ITEM; do
-    if [[ "$ITEM" == "$2" ]]; then
+  local list="$1" element="$2"
+  local item
+  while read -r item; do
+    if [[ "$item" == "$element" ]]; then
       echo 1
     fi
-  done <<< "$1"
+  done <<< "$list"
+  return 0
 }
 
 # Get WiFi strength
 # $1 = Wifi RSSI
-# $! = Wifi strength level 1-4
 get_wifi_strength() {
-  if [[ "$1" -lt -80 ]]; then
+  local rssi="$1"
+  if [[ "$rssi" -lt -80 ]]; then
     echo 1
-  elif [[ "$1" -lt -70 ]]; then
+  elif [[ "$rssi" -lt -70 ]]; then
     echo 2
-  elif [[ "$1" -lt -60 ]]; then
+  elif [[ "$rssi" -lt -60 ]]; then
     echo 3
   else
     echo 4
   fi
+  return 0
 }
 
 # Get WiFi strength for a scan result
 # $1 = Wifi RSSI (may be empty; system_profiler omits it for many networks)
-# $! = Wifi strength level 1-4 (defaults to 4 when signal is unknown)
 get_scan_strength() {
-  if [[ "$1" == "" ]]; then
+  local rssi="$1"
+  if [[ "$rssi" == "" ]]; then
     echo 4
   else
-    get_wifi_strength "$1"
+    get_wifi_strength "$rssi"
   fi
+  return 0
 }
 
 # Parse `system_profiler SPAirPortDataType` output into a JSON array of
@@ -278,7 +305,8 @@ get_scan_strength() {
 # $1 = system_profiler SPAirPortDataType text
 # $2 = Wi-Fi interface name (e.g. en0)
 parse_scan_results() {
-  echo "$1" | awk -v iface="$2" '
+  local text="$1" iface="$2"
+  echo "$text" | awk -v iface="$iface" '
     function flush() {
       if (ssid != "") { printf "%s\t%s\t%s\t%s\t%s\n", section, ssid, channel, security, rssi }
       ssid=""; channel=""; security=""; rssi=""
@@ -303,13 +331,15 @@ parse_scan_results() {
     END { flush() }
   ' | jq -Rn '[inputs | split("\t")
     | {section:.[0], ssid:.[1], channel:(.[2]|tonumber? // 0), security:.[3], rssi:(.[4]|tonumber? // 0)}]'
+  return 0
 }
 
 # Get the active network SSID from a scan JSON array
 # $1 = networks JSON
-# $! = String
 get_active_scan_ssid() {
-  jq -r 'map(select(.section == "current"))[0].ssid // empty' <<< "$1"
+  local networks="$1"
+  jq -r 'map(select(.section == "current"))[0].ssid // empty' <<< "$networks"
+  return 0
 }
 
 # Scan Wi-Fi networks. Reads real SSIDs with CoreWLAN through osascript, whose
@@ -318,29 +348,29 @@ get_active_scan_ssid() {
 # A live scan also refreshes the OS scan cache that "cached" mode reads.
 # $1 = Wi-Fi interface name
 # $2 = mode: "cached" for the instant OS cache, empty for a live scan
-# $! = JSON array of { section, ssid, channel, security, rssi }
 scan_networks() {
-  local SRC="src/wifi-scan.js"
-  local MODE="$2"
+  local interface="$1" mode="$2"
+  local src="src/wifi-scan.js"
 
-  if [[ -f "$SRC" ]]; then
-    local OUT
-    OUT=$(osascript -l JavaScript "$SRC" "$MODE" 2>/dev/null)
-    if [[ -n "$OUT" ]] && [[ "$OUT" != "[]" ]]; then
-      echo "$OUT"
-      return
+  if [[ -f "$src" ]]; then
+    local out
+    out=$(osascript -l JavaScript "$src" "$mode" 2>/dev/null)
+    if [[ -n "$out" ]] && [[ "$out" != "[]" ]]; then
+      echo "$out"
+      return 0
     fi
   fi
 
   # An empty cache is expected. Return nothing so the caller can show a
   # placeholder and rerun with a live scan, instead of falling back to
   # system_profiler and its redacted names.
-  if [[ "$MODE" == "cached" ]]; then
+  if [[ "$mode" == "cached" ]]; then
     echo "[]"
-    return
+    return 0
   fi
 
-  parse_scan_results "$(system_profiler SPAirPortDataType 2>/dev/null)" "$1"
+  parse_scan_results "$(system_profiler SPAirPortDataType 2>/dev/null)" "$interface"
+  return 0
 }
 
 # Build the Alfred items for a Wi-Fi scan in a single jq pass. Marks the
@@ -352,8 +382,8 @@ scan_networks() {
 # SSID would flag every access point that shares the name.
 # $1 = networks JSON array { section, ssid, channel, security, rssi }
 # $2 = saved/preferred networks (newline text, optional)
-# $! = JSON array of Alfred items, sorted by priority
 build_wifi_items() {
+  local networks="$1"
   local saved
   saved=$(printf '%s' "$2" | jq -Rn '[inputs | gsub("^[ \t]+|[ \t]+$";"") | select(length > 0)]')
 
@@ -392,10 +422,12 @@ build_wifi_items() {
              + (if ($n.security != "" and $n.security != null) then ", " + $n.security else "" end)),
            arg: (if $n.ssid == "<redacted>" then "" else $prefix + $n.ssid end),
            valid: ($n.ssid != "<redacted>"),
-           icon: {path: .icon}} ]' <<< "$1"
+           icon: {path: .icon}} ]' <<< "$networks"
+  return 0
 }
 
 # Open the macOS Location Services settings pane
 open_location_settings() {
   open "x-apple.systempreferences:com.apple.preference.security?Privacy_LocationServices"
+  return 0
 }
