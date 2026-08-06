@@ -1,6 +1,18 @@
 #!/bin/bash
-# Mock osascript. MOCK_HELPER=names emits the scanner's JSON; else nothing.
-if [ "$MOCK_HELPER" == "names" ]; then
+# Mock osascript.
+#   MOCK_SCAN_SIZE=N  emits N synthetic networks (one "current"), for perf tests.
+#   MOCK_HELPER=names emits the scanner's small canned JSON.
+#   otherwise         emits nothing.
+if [ -n "$MOCK_SCAN_SIZE" ]; then
+  printf '['
+  for i in $(seq 1 "$MOCK_SCAN_SIZE"); do
+    [ "$i" -gt 1 ] && printf ','
+    if [ "$i" -eq 1 ]; then sec=current; else sec=other; fi
+    printf '{"section":"%s","ssid":"Net%d","channel":36,"security":"WPA2 Personal","rssi":%d}' \
+      "$sec" "$i" "$(( -40 - i % 50 ))"
+  done
+  printf ']'
+elif [ "$MOCK_HELPER" == "names" ]; then
   printf '[{"section":"current","ssid":"HomeNet","channel":36,"security":"WPA2 Personal","rssi":-45},{"section":"other","ssid":"CoffeeShop","channel":40,"security":"None","rssi":-60}]'
 fi
 exit 0
