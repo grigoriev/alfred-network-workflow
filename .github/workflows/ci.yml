@@ -42,7 +42,7 @@ jobs:
           fetch-depth: 0
       - name: Run tests under kcov
         run: |
-          docker run --rm -v "$PWD:$PWD" -w "$PWD" kcov/kcov:latest bash -c \
+          docker run --rm --security-opt seccomp=unconfined --cap-add=SYS_PTRACE -v "$PWD:$PWD" -w "$PWD" kcov/kcov:latest bash -c \
             "apt-get update -qq && apt-get install -y -qq bats jq >/dev/null && kcov --include-pattern=src/ coverage bats \$(ls tests/*.bats | grep -v wifi_scan_tests) || true"
       - name: Convert coverage to SonarQube format
         run: python3 .github/coverage-to-sonar.py coverage sonar-coverage.xml
