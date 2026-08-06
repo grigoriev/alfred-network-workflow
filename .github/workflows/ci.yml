@@ -45,10 +45,7 @@ jobs:
           docker run --rm -v "$PWD:$PWD" -w "$PWD" kcov/kcov:latest bash -c \
             "apt-get update -qq && apt-get install -y -qq bats jq >/dev/null && kcov --include-pattern=src/ coverage bats \$(ls tests/*.bats | grep -v wifi_scan_tests) || true"
       - name: Convert coverage to SonarQube format
-        run: |
-          python3 .github/coverage-to-sonar.py coverage sonar-coverage.xml
-          echo "== report paths =="; grep -oE 'path="[^"]*"' sonar-coverage.xml | head
-          echo "== cobertura filenames =="; grep -rhoE 'filename="[^"]*"' coverage | head
+        run: python3 .github/coverage-to-sonar.py coverage sonar-coverage.xml
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2.1
         env:
