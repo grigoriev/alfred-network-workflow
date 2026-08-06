@@ -5,8 +5,8 @@
 
 # Handle action
 if [[ "$1" != "" ]]; then
-  IS_CONNECTED=$(test -z "$(scutil --nc status "$1" | head -n 1 | grep Connected)" && echo 0 || echo 1)
-  if [[ "$IS_CONNECTED" -eq 1 ]]; then
+  is_connected=$([[ -z "$(scutil --nc status "$1" | head -n 1 | grep Connected)" ]] && echo 0 || echo 1)
+  if [[ "$is_connected" -eq 1 ]]; then
     scutil --nc stop "$1"
   else
     if scutil --nc show "$1" | head -1 | grep -q PPP:L2TP; then
