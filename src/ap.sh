@@ -1,16 +1,16 @@
 #!/bin/bash
 
-. src/wifiCommon.sh
-. src/workflowHandler.sh
+. src/wifi_common.sh
+. src/workflow_handler.sh
 
 # Handle action
-if [ "$1" != "" ]; then
-  if [ "$1" == "Null" ]; then
+if [[ "$1" != "" ]]; then
+  if [[ "$1" == "Null" ]]; then
     exit
   fi
 
-  if [ "$1" == "LOCATION" ]; then
-    openLocationSettings
+  if [[ "$1" == "LOCATION" ]]; then
+    open_location_settings
     exit
   fi
 
@@ -25,19 +25,19 @@ if [ "$1" != "" ]; then
 fi
 
 # Guard against a Mac without Wi-Fi hardware
-if [ -z "$INTERFACE" ]; then
-  addResult "" "" "No Wi-Fi interface found" "This Mac has no Wi-Fi hardware" "$ICON_WIFI_ERROR" "no"
-  getJSONResults
+if [[ -z "$INTERFACE" ]]; then
+  add_result "" "" "No Wi-Fi interface found" "This Mac has no Wi-Fi hardware" "$ICON_WIFI_ERROR" "no"
+  get_json_results
   exit
 fi
 
 # The scan takes a few seconds. On the first pass show a placeholder and
 # ask Alfred to re-run, so the scan runs while "Scanning" is on screen.
-if [ -z "$ap_scanning" ]; then
-  addResult "" "" "Scanning for Wi-Fi networks…" "This can take a few seconds" "$ICON_WIFI" "no"
-  setRerun 0.1
-  addVariable ap_scanning 1
-  getJSONResults
+if [[ -z "$ap_scanning" ]]; then
+  add_result "" "" "Scanning for Wi-Fi networks…" "This can take a few seconds" "$ICON_WIFI" "no"
+  set_rerun 0.1
+  add_variable ap_scanning 1
+  get_json_results
   exit
 fi
 
@@ -46,12 +46,12 @@ fi
 # Export the saved networks so the scanner can pick the connected one.
 SAVED_APS=$(networksetup -listpreferredwirelessnetworks "$INTERFACE")
 export WIFI_SAVED="$SAVED_APS"
-NETWORKS=$(scanNetworks "$INTERFACE")
+NETWORKS=$(scan_networks "$INTERFACE")
 
 if [ "$(jq 'length' <<< "$NETWORKS")" == "0" ]; then
   # Handle no wifi access points found
-  addResult "" "Null" "No access points found" "" "$ICON_WIFI_ERROR"
-  getJSONResults
+  add_result "" "Null" "No access points found" "" "$ICON_WIFI_ERROR"
+  get_json_results
   exit
 fi
 
@@ -66,5 +66,5 @@ if jq -e 'any(.[]; .ssid == "<redacted>")' >/dev/null <<< "$NETWORKS"; then
 fi
 
 # Build every network row in a single jq pass, then append it to the hint.
-ITEMS=$(buildWifiItems "$NETWORKS" "$SAVED_APS")
+ITEMS=$(build_wifi_items "$NETWORKS" "$SAVED_APS")
 jq -cn --argjson hint "$HINT" --argjson items "$ITEMS" '{items: ($hint + $items)}'

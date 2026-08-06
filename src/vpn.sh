@@ -1,12 +1,12 @@
 #!/bin/bash
 
-. src/workflowHandler.sh
+. src/workflow_handler.sh
 . src/helpers.sh
 
 # Handle action
-if [ "$1" != "" ]; then
+if [[ "$1" != "" ]]; then
   IS_CONNECTED=$(test -z "$(scutil --nc status "$1" | head -n 1 | grep Connected)" && echo 0 || echo 1)
-  if [ "$IS_CONNECTED" -eq 1 ]; then
+  if [[ "$IS_CONNECTED" -eq 1 ]]; then
     scutil --nc stop "$1"
   else
     if scutil --nc show "$1" | head -1 | grep -q PPP:L2TP; then
@@ -20,10 +20,10 @@ if [ "$1" != "" ]; then
 fi
 
 while read -r LINE; do
-  OUTPUT="$(getVPNInfo "$LINE")"
+  OUTPUT="$(get_vpn_info "$LINE")"
   IFS='~' read -r -a ARRAY <<< "$OUTPUT"
 
-  addResult "" "${ARRAY[1]}" "${ARRAY[1]}" "${ARRAY[2]} (${ARRAY[0]})" "${ARRAY[3]}"
+  add_result "" "${ARRAY[1]}" "${ARRAY[1]}" "${ARRAY[2]} (${ARRAY[0]})" "${ARRAY[3]}"
 done <<< "$(echo "$(scutil --nc list)" | awk 'NR>1')"
 
-getJSONResults
+get_json_results

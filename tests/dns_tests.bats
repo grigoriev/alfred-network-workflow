@@ -3,13 +3,13 @@
 . src/helpers.sh
 load variables
 
-@test "getDNS: get current DNS list" {
-  run getDNS "$DNS"
+@test "get_dns: get current DNS list" {
+  run get_dns "$DNS"
   [ "$output" = "8.8.8.8 / 8.8.4.4 / 192.168.1.1" ]
 }
 
-@test "parseDNSLine: parse a single dns config line" {
-  run parseDNSLine "Google DNS:8.8.8.8,8.8.4.4"
+@test "parse_dns_line: parse a single dns config line" {
+  run parse_dns_line "Google DNS:8.8.8.8,8.8.4.4"
   IFS='~' read -r -a ARRAY <<< "$output"
   [ "$status" -eq 0 ]
   [ "${ARRAY[0]}" == "Google DNS" ]
@@ -17,54 +17,54 @@ load variables
   [ "${ARRAY[2]}" == "$ICON_DNS" ]
 }
 
-@test "parseDNSLine: parse simple config" {
-  run parseDNSLine "OpenerDNS:42.120.21.30"
+@test "parse_dns_line: parse simple config" {
+  run parse_dns_line "OpenerDNS:42.120.21.30"
   IFS='~' read -r -a ARRAY <<< "$output"
   [ "${ARRAY[0]}" == "OpenerDNS" ]
   [ "${ARRAY[1]}" == "42.120.21.30" ]
 }
 
-@test "parseDNSLine: parse with spaces" {
-  run parseDNSLine "  Random DNS  :  1.2.3.4 , 6.7.8.9"
+@test "parse_dns_line: parse with spaces" {
+  run parse_dns_line "  Random DNS  :  1.2.3.4 , 6.7.8.9"
   IFS='~' read -r -a ARRAY <<< "$output"
   [ "${ARRAY[0]}" == "Random DNS" ]
   [ "${ARRAY[1]}" == "1.2.3.4 / 6.7.8.9" ]
 }
 
-@test "parseDNSLine: ignore comments" {
-  run parseDNSLine "# comment"
+@test "parse_dns_line: ignore comments" {
+  run parse_dns_line "# comment"
   IFS='~' read -r -a ARRAY <<< "$output"
   [ "${ARRAY[0]}" == "" ]
 }
 
-@test "parseDNSLine: ignore comments with separator" {
-  run parseDNSLine "# comment: this is a comment"
+@test "parse_dns_line: ignore comments with separator" {
+  run parse_dns_line "# comment: this is a comment"
   IFS='~' read -r -a ARRAY <<< "$output"
   [ "${ARRAY[0]}" == "" ]
 }
 
-@test "parseDNSLine: ignore empty lines" {
-  run parseDNSLine "  "
+@test "parse_dns_line: ignore empty lines" {
+  run parse_dns_line "  "
   IFS='~' read -r -a ARRAY <<< "$output"
   [ "${ARRAY[0]}" == "" ]
 }
 
-@test "parseDNSLine: set used state" {
-  run parseDNSLine "Google DNS:8.8.8.8,8.8.4.4" "8.8.8.8 / 8.8.4.4"
+@test "parse_dns_line: set used state" {
+  run parse_dns_line "Google DNS:8.8.8.8,8.8.4.4" "8.8.8.8 / 8.8.4.4"
   IFS='~' read -r -a ARRAY <<< "$output"
   [ "${ARRAY[0]}" == "Google DNS (used)" ]
   [ "${ARRAY[1]}" == "8.8.8.8 / 8.8.4.4" ]
   [ "${ARRAY[2]}" == "$ICON_DNS_USED" ]
 }
 
-@test "parseDNSLine: handle invalid line" {
-  run parseDNSLine "Invalid 1.2.3.4"
+@test "parse_dns_line: handle invalid line" {
+  run parse_dns_line "Invalid 1.2.3.4"
   IFS='~' read -r -a ARRAY <<< "$output"
   [ "${ARRAY[0]}" == "" ]
 }
 
-@test "parseDNSLine: handle missing ip" {
-  run parseDNSLine "Invalid:"
+@test "parse_dns_line: handle missing ip" {
+  run parse_dns_line "Invalid:"
   IFS='~' read -r -a ARRAY <<< "$output"
   [ "${ARRAY[0]}" == "" ]
 }

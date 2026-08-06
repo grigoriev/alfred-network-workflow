@@ -9,3 +9,5 @@ src/update.sh
 # Build artifact
 Network.alfredworkflow
 .idea/
+coverage/
+sonar-coverage.xml

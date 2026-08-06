@@ -3,5 +3,5 @@
 . src/helpers.sh
 
 LIST=$(networksetup -listallhardwareports)
-INTERFACE=$(getWifiInterface "$LIST")
-NAME=$(getWifiName "$LIST")
+INTERFACE=$(get_wifi_interface "$LIST")
+NAME=$(get_wifi_name "$LIST")

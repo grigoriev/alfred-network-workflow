@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. src/workflowHandler.sh
+. src/workflow_handler.sh
 . src/media.sh
 
 # Single entry point. Every command lives under the "net" keyword:
@@ -18,19 +18,19 @@ REST="${REST# }"
 
 SUBCOMMANDS="wifi eth wifilist vpn dns update"
 
-isSubcommand() {
+is_subcommand() {
   local s
   for s in $SUBCOMMANDS; do
-    [ "$s" == "$1" ] && return 0
+    [[ "$s" == "$1" ]] && return 0
   done
   return 1
 }
 
 # Add a catalog entry when its subcommand matches the filter prefix
 # $1 subcommand  $2 filter  $3 title  $4 subtitle  $5 icon  $6 autocomplete
-catItem() {
+cat_item() {
   case "$1" in
-    "$2"*) addResult "" "" "$3" "$4" "$5" "no" "$6" ;;
+    "$2"*) add_result "" "" "$3" "$4" "$5" "no" "$6" ;;
   esac
 }
 
@@ -38,17 +38,17 @@ catItem() {
 # $1 = filter (may be empty)
 catalog() {
   local f="$1"
-  catItem wifi     "$f" "Wi-Fi"      "Show Wi-Fi info and toggle it on or off"        "$ICON_WIFI" "wifi "
-  catItem eth      "$f" "Ethernet"   "Show Ethernet info"                             "$ICON_ETH"  "eth "
-  catItem wifilist "$f" "Wi-Fi List" "Scan for nearby Wi-Fi networks"                 "$ICON_WIFI" "wifilist "
-  catItem vpn      "$f" "VPN"        "List configured VPNs and connect"               "$ICON_VPN"  "vpn "
-  catItem dns      "$f" "DNS"        "List and change DNS for the primary connection" "$ICON_DNS"  "dns "
-  catItem update   "$f" "Update"     "Check for and install workflow updates"         "icon.png"   "update "
-  getJSONResults
+  cat_item wifi     "$f" "Wi-Fi"      "Show Wi-Fi info and toggle it on or off"        "$ICON_WIFI" "wifi "
+  cat_item eth      "$f" "Ethernet"   "Show Ethernet info"                             "$ICON_ETH"  "eth "
+  cat_item wifilist "$f" "Wi-Fi List" "Scan for nearby Wi-Fi networks"                 "$ICON_WIFI" "wifilist "
+  cat_item vpn      "$f" "VPN"        "List configured VPNs and connect"               "$ICON_VPN"  "vpn "
+  cat_item dns      "$f" "DNS"        "List and change DNS for the primary connection" "$ICON_DNS"  "dns "
+  cat_item update   "$f" "Update"     "Check for and install workflow updates"         "icon.png"   "update "
+  get_json_results
 }
 
 # Run the action for a selected item
-if [ "$MODE" == "run" ]; then
+if [[ "$MODE" == "run" ]]; then
   case "$CMD" in
     wifi)     . src/wifi.sh "$REST" ;;
     eth)      . src/ethernet.sh "$REST" ;;
@@ -61,10 +61,10 @@ if [ "$MODE" == "run" ]; then
 fi
 
 # List mode
-if [ -z "$CMD" ]; then
+if [[ -z "$CMD" ]]; then
   catalog ""
-elif isSubcommand "$CMD"; then
-  if [ "$CMD" == "update" ]; then
+elif is_subcommand "$CMD"; then
+  if [[ "$CMD" == "update" ]]; then
     # The shared updater builds its own arg (a download URL), so no prefix
     . src/update.sh "$REST"
   else
