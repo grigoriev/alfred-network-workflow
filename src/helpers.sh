@@ -387,17 +387,9 @@ build_wifi_items() {
   local saved
   saved=$(printf '%s' "$saved_input" | jq -Rn '[inputs | gsub("^[ \t]+|[ \t]+$";"") | select(length > 0)]')
 
-  jq -c -f src/build-wifi-items.jq \
-    --argjson saved "$saved" \
-    --arg prefix "$ARG_PREFIX" \
-    --argjson high "$PRIORITY_HIGH" \
-    --argjson medium "$PRIORITY_MEDIUM" \
-    --argjson low "$PRIORITY_LOW" \
-    --arg active "$ICON_WIFI_ACTIVE_" \
-    --arg star "$ICON_WIFI_STAR_" \
-    --arg open "$ICON_WIFI_" \
-    --arg lock "$ICON_WIFI_LOCK_" \
-    --arg end "$ICON_END" <<< "$networks"
+  # A single line on purpose: kcov mangles backslash-continued commands.
+  # shellcheck disable=SC2086
+  jq -c -f src/build-wifi-items.jq --argjson saved "$saved" --arg prefix "$ARG_PREFIX" --argjson high "$PRIORITY_HIGH" --argjson medium "$PRIORITY_MEDIUM" --argjson low "$PRIORITY_LOW" --arg active "$ICON_WIFI_ACTIVE_" --arg star "$ICON_WIFI_STAR_" --arg open "$ICON_WIFI_" --arg lock "$ICON_WIFI_LOCK_" --arg end "$ICON_END" <<< "$networks"
   return 0
 }
 
