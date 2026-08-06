@@ -7,8 +7,8 @@
 #
 # Times with jq's `now` (already a dependency); BSD `date` has no %N.
 
-BUDGET_MS=3000
-NETWORKS=50
+BUDGET_MS=2000
+NETWORKS=100
 
 setup() {
   export PATH="$BATS_TEST_DIRNAME/mocks/bin:$PATH"

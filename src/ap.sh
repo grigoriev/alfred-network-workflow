@@ -51,44 +51,20 @@ NETWORKS=$(scanNetworks "$INTERFACE")
 if [ "$(jq 'length' <<< "$NETWORKS")" == "0" ]; then
   # Handle no wifi access points found
   addResult "" "Null" "No access points found" "" "$ICON_WIFI_ERROR"
-else
-  # macOS hides network names unless the app reading Wi-Fi has Location
-  # access. Channel, security and signal still show for each network.
-  if jq -e 'any(.[]; .ssid == "<redacted>")' >/dev/null <<< "$NETWORKS"; then
-    addResult "" "LOCATION" "Wi-Fi names hidden by macOS" \
-      "Press ⏎ to open Location Services, then enable it for Alfred" "$ICON_WIFI_ERROR"
-  fi
-
-  # Annotate each network with a priority and icon, then sort by priority
-  ANNOTATED=$(
-    while IFS= read -r NET; do
-      getScanDetails "$NET" "$SAVED_APS"
-    done <<< "$(jq -c '.[]' <<< "$NETWORKS")" | jq -sc 'sort_by(.priority)'
-  )
-
-  while IFS= read -r ITEM; do
-    [ -z "$ITEM" ] && continue
-    SSID=$(jq -r '.ssid' <<< "$ITEM")
-    CHANNEL=$(jq -r '.channel' <<< "$ITEM")
-    SECURITY=$(jq -r '.security' <<< "$ITEM")
-    RSSI=$(jq -r '.rssi' <<< "$ITEM")
-    ICON=$(jq -r '.icon' <<< "$ITEM")
-
-    SUBTITLE="channel $CHANNEL"
-    if [ "$RSSI" != "0" ]; then
-      SUBTITLE="RSSI $RSSI dBm, $SUBTITLE"
-    fi
-    if [ "$SECURITY" != "" ]; then
-      SUBTITLE="$SUBTITLE, $SECURITY"
-    fi
-
-    if [ "$SSID" == "<redacted>" ]; then
-      # No usable name to connect with, so make it a non-actionable row
-      addResult "" "" "Hidden network" "$SUBTITLE" "$ICON" "no"
-    else
-      addResult "" "$SSID" "$SSID" "$SUBTITLE" "$ICON"
-    fi
-  done <<< "$(jq -c '.[]' <<< "$ANNOTATED")"
+  getJSONResults
+  exit
 fi
 
-getJSONResults
+# macOS hides network names unless the app reading Wi-Fi has Location access.
+# Channel, security and signal still show for each network. Add a hint row.
+HINT="[]"
+if jq -e 'any(.[]; .ssid == "<redacted>")' >/dev/null <<< "$NETWORKS"; then
+  HINT=$(jq -nc --arg prefix "$ARG_PREFIX" --arg icon "$ICON_WIFI_ERROR" \
+    '[{title: "Wi-Fi names hidden by macOS",
+       subtitle: "Press ⏎ to open Location Services, then enable it for Alfred",
+       arg: ($prefix + "LOCATION"), valid: true, icon: {path: $icon}}]')
+fi
+
+# Build every network row in a single jq pass, then append it to the hint.
+ITEMS=$(buildWifiItems "$NETWORKS" "$SAVED_APS")
+jq -cn --argjson hint "$HINT" --argjson items "$ITEMS" '{items: ($hint + $items)}'
