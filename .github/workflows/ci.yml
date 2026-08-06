@@ -40,15 +40,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - name: Diagnose (ubuntu bats without kcov)
+      - name: Diagnose (build_wifi_items UNDER kcov)
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq bats jq >/dev/null
-          echo "== build_wifi_items output on ubuntu (no kcov) =="
-          bash -c '. src/helpers.sh; export PATH="tests/mocks/bin:$PATH"; build_wifi_items "$(jq -nc "[{section:\"current\",ssid:\"HomeNet\",channel:36,security:\"WPA2 Personal\",rssi:-45}]")"' | head -c 200; echo
-          echo "== get_wifi_state on ubuntu (no kcov) =="
-          bash -c '. src/helpers.sh; export PATH="tests/mocks/bin:$PATH"; echo "[$(get_wifi_state en0)]"'
-          echo "== bats (subset) no kcov =="
-          bats tests/apTests.bats 2>&1 | grep -E "^(ok|not ok) .*(build_wifi_items|active icon)" | head -3 || true
+          docker run --rm -v "$PWD:$PWD" -w "$PWD" kcov/kcov:latest bash -c \
+            "apt-get update -qq && apt-get install -y -qq bats jq >/dev/null; echo JQ=$(command -v jq); echo '== under kcov =='; kcov --include-pattern=src/ /tmp/cov bash diag.sh; echo '== output above =='"
       - name: Run tests under kcov
         run: |
           docker run --rm -v "$PWD:$PWD" -w "$PWD" kcov/kcov:latest bash -c \
