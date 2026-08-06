@@ -75,17 +75,17 @@ STUB
   [[ "$output" =~ "updater run [https://example.com/W.alfredworkflow]" ]]
 }
 
-# --- scanNetworks (CoreWLAN helper) ----------------------------------------
+# --- scan_networks (CoreWLAN helper) ----------------------------------------
 
-@test "scanNetworks: uses the helper json when authorized" {
+@test "scan_networks: uses the helper json when authorized" {
   export MOCK_HELPER=names
-  run bash -c '. src/helpers.sh; scanNetworks en0'
+  run bash -c '. src/helpers.sh; scan_networks en0'
   echo "$output" | jq -e 'map(select(.section=="current"))[0].ssid == "HomeNet"' >/dev/null
   echo "$output" | jq -e 'any(.[]; .ssid == "CoffeeShop")' >/dev/null
 }
 
-@test "scanNetworks: falls back to system_profiler json when the helper is empty" {
-  run bash -c '. src/helpers.sh; scanNetworks en0'
+@test "scan_networks: falls back to system_profiler json when the helper is empty" {
+  run bash -c '. src/helpers.sh; scan_networks en0'
   echo "$output" | jq -e 'any(.[]; .ssid == "HomeNet")' >/dev/null
 }
 

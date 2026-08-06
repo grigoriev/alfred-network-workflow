@@ -80,12 +80,12 @@ function pickCurrent(list, curChan, curRssi, saved) {
     if (list[i].ch === curChan && list[i].ssid !== '') cands.push(i);
   }
   if (cands.length === 0) return -1;
-  var pool = cands.filter(function (i) { return saved.indexOf(list[i].ssid) !== -1; });
+  var pool = cands.filter(function (i) { return saved.includes(list[i].ssid); });
   if (pool.length === 0) pool = cands;
   var best = -1, bestDiff = 1e9;
-  for (var k = 0; k < pool.length; k++) {
-    var diff = Math.abs(list[pool[k]].rssi - curRssi);
-    if (diff < bestDiff) { bestDiff = diff; best = pool[k]; }
+  for (var idx of pool) {
+    var diff = Math.abs(list[idx].rssi - curRssi);
+    if (diff < bestDiff) { bestDiff = diff; best = idx; }
   }
   return best;
 }
