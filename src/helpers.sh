@@ -383,9 +383,9 @@ scan_networks() {
 # $1 = networks JSON array { section, ssid, channel, security, rssi }
 # $2 = saved/preferred networks (newline text, optional)
 build_wifi_items() {
-  local networks="$1"
+  local networks="$1" saved_input="$2"
   local saved
-  saved=$(printf '%s' "$2" | jq -Rn '[inputs | gsub("^[ \t]+|[ \t]+$";"") | select(length > 0)]')
+  saved=$(printf '%s' "$saved_input" | jq -Rn '[inputs | gsub("^[ \t]+|[ \t]+$";"") | select(length > 0)]')
 
   jq -c \
     --argjson saved "$saved" \

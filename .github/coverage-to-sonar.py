@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Convert kcov cobertura reports into the SonarQube generic coverage format."""
 import glob
+import os
 import sys
 import xml.etree.ElementTree as ET
 
@@ -19,7 +20,8 @@ for cobertura in reports:
 
 coverage = ET.Element("coverage", version="1")
 for name, lines in sorted(files.items()):
-    file_el = ET.SubElement(coverage, "file", path=name)
+    rel = os.path.relpath(name)
+    file_el = ET.SubElement(coverage, "file", path=rel)
     for number, covered in sorted(lines.items()):
         ET.SubElement(
             file_el, "lineToCover",
