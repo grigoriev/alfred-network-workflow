@@ -94,6 +94,26 @@ setup() {
   [[ "$output" =~ '"items":[' ]]
 }
 
+@test "set_pref and get_pref: non-volatile store in the data dir" {
+  set_pref "token" "abc" 0
+  [ -f "$alfred_workflow_data/settings" ]
+  run get_pref "token" 0
+  [ "$output" == "abc" ]
+}
+
+@test "get_pref: missing file returns empty" {
+  mkdir -p "$alfred_workflow_cache"
+  run get_pref "nope" 1
+  [ "$output" == "" ]
+}
+
+@test "get_json_results: multiple variables are comma-separated" {
+  add_variable "a" "1"
+  add_variable "b" "2"
+  run get_json_results
+  [[ "$output" =~ '"variables":{"a":"1","b":"2"}' ]]
+}
+
 @test "set_pref and get_pref: store and read a value" {
   set_pref "server" "8.8.8.8" 1
   run get_pref "server" 1
