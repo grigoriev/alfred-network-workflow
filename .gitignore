@@ -5,6 +5,7 @@ temp
 
 # Fetched at build time from grigoriev/alfred-workflow-updater
 src/update.sh
+src/autoupdate.sh
 
 # Build artifact
 Network.alfredworkflow

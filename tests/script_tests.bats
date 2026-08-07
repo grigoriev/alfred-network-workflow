@@ -27,6 +27,30 @@ setup() {
   echo "$output" | jq -e '[.items[].title] == ["VPN", "Update"]' >/dev/null
 }
 
+@test "net.sh: catalog offers an autoupdate toggle on the home view" {
+  run bash -c '. src/net.sh list ""'
+  echo "$output" | jq -e '[.items[].title] | index("Autoupdate: off") != null' >/dev/null
+}
+
+@test "net.sh: run autoupdate on enables it and the toggle flips" {
+  run bash -c '. src/net.sh run "autoupdate on"'
+  [ -f "$alfred_workflow_data/autoupdate" ]
+  run bash -c '. src/net.sh list ""'
+  echo "$output" | jq -e '[.items[].title] | index("Autoupdate: on") != null' >/dev/null
+}
+
+@test "net.sh: shows an update banner when one is pending" {
+  mkdir -p "$alfred_workflow_data"
+  : > "$alfred_workflow_data/autoupdate"
+  cat > src/update.sh <<'STUB'
+#!/bin/bash
+printf '{"items":[{"title":"Update to v9","arg":"https://example.com/Network.alfredworkflow"}]}'
+STUB
+  run bash -c '. src/net.sh list ""'
+  rm -f src/update.sh
+  echo "$output" | jq -e '.items[0].title == "Update available"' >/dev/null
+}
+
 @test "net.sh: dispatches a subcommand and prefixes item args" {
   run bash -c '. src/net.sh list "vpn"'
   [[ "$output" =~ "Test-VPN" ]]
