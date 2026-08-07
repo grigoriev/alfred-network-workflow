@@ -306,31 +306,8 @@ get_scan_strength() {
 # $2 = Wi-Fi interface name (e.g. en0)
 parse_scan_results() {
   local text="$1" iface="$2"
-  echo "$text" | awk -v iface="$iface" '
-    function flush() {
-      if (ssid != "") { printf "%s\t%s\t%s\t%s\t%s\n", section, ssid, channel, security, rssi }
-      ssid=""; channel=""; security=""; rssi=""
-    }
-    # Interface header (8 spaces): scope parsing to the Wi-Fi interface
-    /^        [A-Za-z0-9]+:$/ {
-      flush(); cur = $1; sub(/:$/, "", cur); inIface = (cur == iface); section=""; next
-    }
-    !inIface { next }
-    # Section headers (10 spaces)
-    /^          Current Network Information:/ { flush(); section="current"; next }
-    /^          Other Local Wi-Fi Networks:/ { flush(); section="other"; next }
-    /^          [A-Za-z].*:$/ { flush(); section=""; next }
-    section=="" { next }
-    # Network fields (14 spaces)
-    /^              Channel:/ { l=$0; sub(/^ *Channel: */,"",l); split(l,a," "); channel=a[1]; next }
-    /^              Security:/ { l=$0; sub(/^ *Security: */,"",l); security=l; next }
-    /^              Signal . Noise:/ { l=$0; sub(/^ *Signal \/ Noise: */,"",l); split(l,a," "); rssi=a[1]; next }
-    /^              / { next }
-    # Network name header (12 spaces, ends with a colon)
-    /^            .*:$/ { flush(); s=$0; sub(/^ */,"",s); sub(/:$/,"",s); ssid=s; next }
-    END { flush() }
-  ' | jq -Rn '[inputs | split("\t")
-    | {section:.[0], ssid:.[1], channel:(.[2]|tonumber? // 0), security:.[3], rssi:(.[4]|tonumber? // 0)}]'
+  # The awk and jq programs live in sibling files so the shell stays small.
+  echo "$text" | awk -v iface="$iface" -f src/parse-wifi.awk | jq -Rn -f src/wifi-rows.jq
   return 0
 }
 
@@ -397,32 +374,8 @@ build_wifi_items() {
     --arg star "$ICON_WIFI_STAR_" \
     --arg open "$ICON_WIFI_" \
     --arg lock "$ICON_WIFI_LOCK_" \
-    --arg end "$ICON_END" '
-    def strength(r):
-      if r == null then 4
-      elif r < -80 then 1
-      elif r < -70 then 2
-      elif r < -60 then 3
-      else 4 end;
-    [ .[]
-      | select(.ssid != "")
-      | . as $n
-      | (if $n.section == "current" then {p: $high, base: $active}
-         elif ($saved | index($n.ssid)) then {p: $medium, base: $star}
-         elif ($n.security == "None" or $n.security == "") then {p: $low, base: $open}
-         else {p: $low, base: $lock} end) as $c
-      | {p: $c.p, n: $n, icon: ($c.base + (strength($n.rssi) | tostring) + $end)} ]
-    | sort_by(.p)
-    | [ .[]
-        | .n as $n
-        | {title: (if $n.ssid == "<redacted>" then "Hidden network" else $n.ssid end),
-           subtitle: (
-             (if ($n.rssi != 0 and $n.rssi != null) then "RSSI " + ($n.rssi | tostring) + " dBm, " else "" end)
-             + "channel " + ($n.channel | tostring)
-             + (if ($n.security != "" and $n.security != null) then ", " + $n.security else "" end)),
-           arg: (if $n.ssid == "<redacted>" then "" else $prefix + $n.ssid end),
-           valid: ($n.ssid != "<redacted>"),
-           icon: {path: .icon}} ]' <<< "$networks"
+    --arg end "$ICON_END" \
+    -f src/build-wifi-items.jq <<< "$networks"
   return 0
 }
 
