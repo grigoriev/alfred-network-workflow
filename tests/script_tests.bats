@@ -17,13 +17,14 @@ setup() {
   [ "$status" -eq 0 ]
   [[ "$output" =~ '"autocomplete":"wifi ' ]]
   [[ "$output" =~ '"autocomplete":"vpn ' ]]
-  [[ "$output" =~ '"autocomplete":"update ' ]]
+  echo "$output" | jq -e '.items[-1].title == "Update"' >/dev/null
 }
 
-@test "net.sh: catalog filters by subcommand prefix" {
+@test "net.sh: catalog filters but keeps update last" {
   run bash -c '. src/net.sh list "v"'
   [[ "$output" =~ "VPN" ]]
   [[ ! "$output" =~ "Wi-Fi" ]]
+  echo "$output" | jq -e '[.items[].title] == ["VPN", "Update"]' >/dev/null
 }
 
 @test "net.sh: dispatches a subcommand and prefixes item args" {
