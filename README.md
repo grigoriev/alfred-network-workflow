@@ -32,6 +32,9 @@ Everything lives under one keyword. Type `net` to see the command catalog, then 
 | `net dns`      | List and change DNS for the primary connection. |
 | `net update`   | Check for and install workflow updates.         |
 
+The catalog also offers an **Autoupdate** toggle. When on, `net` checks for a
+new version once a day and shows an "Update available" item.
+
 <p align="center">
 <img src="https://raw.githubusercontent.com/grigoriev/alfred-network-workflow/main/screenshots/wifi-preview.png" alt="wifi" width="600">
 <img src="https://raw.githubusercontent.com/grigoriev/alfred-network-workflow/main/screenshots/wifilist-preview.png" alt="wifilist" width="600">
@@ -70,8 +73,10 @@ make clean     # remove the build artifact and fetched files
 
 Install the tools with `brew install bats-core shellcheck jq`. System commands are replaced by mocks under `tests/mocks/bin`, so the action scripts run deterministically without touching real network state. The Wi-Fi scanner ([`src/wifi-scan.js`](src/wifi-scan.js)) is unit tested via a `WIFI_SCAN_TEST` hook that feeds it fixed data instead of scanning.
 
-The self-update logic is shared, not vendored. `make build` fetches
-[`update.sh`](https://github.com/grigoriev/alfred-workflow-updater) at build time and bundles it, so it is never stored in this repository.
+The update logic is shared, not vendored. `make build` fetches the
+[updater bundle](https://github.com/grigoriev/alfred-workflow-updater)
+(`update.sh` and `autoupdate.sh`) at build time and bundles it, so it is never
+stored in this repository.
 
 ## Releases
 
