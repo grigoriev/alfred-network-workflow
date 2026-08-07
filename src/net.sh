@@ -47,7 +47,8 @@ catalog() {
   cat_item wifilist "$filter" "Wi-Fi List" "Scan for nearby Wi-Fi networks"                 "$ICON_WIFI" "wifilist "
   cat_item vpn      "$filter" "VPN"        "List configured VPNs and connect"               "$ICON_VPN"  "vpn "
   cat_item dns      "$filter" "DNS"        "List and change DNS for the primary connection" "$ICON_DNS"  "dns "
-  cat_item update   "$filter" "Update"     "Check for and install workflow updates"         "icon.png"   "update "
+  # Update is always offered last, regardless of the filter.
+  add_result "" "" "Update" "Check for and install workflow updates" "icon.png" "no" "update "
   get_json_results
   return 0
 }
