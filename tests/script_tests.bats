@@ -80,6 +80,30 @@ STUB
   [[ "$output" =~ '"arg":"dns ' ]]
 }
 
+@test "net.sh: list dns marks default as used when no custom DNS" {
+  run bash -c 'export MOCK_DNS="There aren'\''t any DNS Servers set on Wi-Fi."; . src/net.sh list "dns"'
+  [[ "$output" =~ "Default DNS (used)" ]]
+}
+
+@test "net.sh: run dispatches the eth, wifilist and dns actions" {
+  run bash -c '. src/net.sh run "eth"'
+  [ "$status" -eq 0 ]
+  run bash -c '. src/net.sh run "wifilist"'
+  [ "$status" -eq 0 ]
+  run bash -c '. src/net.sh run "dns DEFAULT"'
+  [ "$status" -eq 0 ]
+}
+
+@test "net.sh: list dispatches the eth subcommand" {
+  run bash -c '. src/net.sh list "eth"'
+  [ "$status" -eq 0 ]
+}
+
+@test "net.sh: run ignores an unknown action" {
+  run bash -c '. src/net.sh run "bogus"'
+  [ "$status" -eq 0 ]
+}
+
 @test "net.sh: list update dispatches to the updater" {
   cat > src/update.sh <<'STUB'
 #!/bin/bash

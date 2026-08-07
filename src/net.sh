@@ -34,7 +34,7 @@ cat_item() {
   local name="$1" filter="$2" title="$3" subtitle="$4" icon="$5" autocomplete="$6"
   case "$name" in
     "$filter"*) add_result "" "" "$title" "$subtitle" "$icon" "no" "$autocomplete" ;;
-    *) ;;
+    *) : ;;
   esac
   return 0
 }
@@ -72,7 +72,7 @@ if [[ "$mode" == "run" ]]; then
     dns)      . src/dns.sh "$rest" ;;
     http://*|https://*) autoupdate_clear; . src/update.sh "$query" ;;
     autoupdate) set_autoupdate "$rest" ;;
-    *) ;;
+    *) : ;;
   esac
   exit
 fi
@@ -94,7 +94,7 @@ elif is_subcommand "$cmd"; then
       wifilist) . src/ap.sh "$rest" ;;
       vpn)      . src/vpn.sh "$rest" ;;
       dns)      . src/dns.sh "$rest" ;;
-      *) ;;
+      *) : ;;
     esac
   fi
 else

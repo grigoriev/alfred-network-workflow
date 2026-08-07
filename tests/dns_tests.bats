@@ -8,6 +8,11 @@ load variables
   [ "$output" = "8.8.8.8 / 8.8.4.4 / 192.168.1.1" ]
 }
 
+@test "get_dns: empty when no servers are set" {
+  run get_dns "There aren't any DNS Servers set on Wi-Fi."
+  [ "$output" == "" ]
+}
+
 @test "parse_dns_line: parse a single dns config line" {
   run parse_dns_line "Google DNS:8.8.8.8,8.8.4.4"
   IFS='~' read -r -a ARRAY <<< "$output"

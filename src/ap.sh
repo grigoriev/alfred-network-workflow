@@ -18,8 +18,7 @@ if [[ "$1" != "" ]]; then
   # security prints the password to stderr, so send stderr down the pipe
   # and discard stdout. The redirect order is intentional.
   # shellcheck disable=SC2069
-  PASS=$(security 2>&1 >/dev/null find-generic-password -ga "$1" \
-    | awk '/ / {print $2}' | tr -d '"')
+  PASS=$(security 2>&1 >/dev/null find-generic-password -ga "$1" | awk '/ / {print $2}' | tr -d '"')
   networksetup -setairportnetwork "$INTERFACE" "$1" "$PASS"
   exit
 fi
@@ -59,10 +58,7 @@ fi
 # Channel, security and signal still show for each network. Add a hint row.
 HINT="[]"
 if jq -e 'any(.[]; .ssid == "<redacted>")' >/dev/null <<< "$NETWORKS"; then
-  HINT=$(jq -nc --arg prefix "$ARG_PREFIX" --arg icon "$ICON_WIFI_ERROR" \
-    '[{title: "Wi-Fi names hidden by macOS",
-       subtitle: "Press ⏎ to open Location Services, then enable it for Alfred",
-       arg: ($prefix + "LOCATION"), valid: true, icon: {path: $icon}}]')
+  HINT=$(jq -nc --arg prefix "$ARG_PREFIX" --arg icon "$ICON_WIFI_ERROR" -f src/wifi-hint.jq)
 fi
 
 # Build every network row in a single jq pass, then append it to the hint.

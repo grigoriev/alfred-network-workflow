@@ -144,8 +144,7 @@ get_ipv4() {
 get_ipv6() {
   local info="$1"
   local ipv6
-  ipv6=$(echo "$info" | grep '^IPv6 IP address' \
-    | awk '/ address/ {print substr($0, index($0, $4))}')
+  ipv6=$(echo "$info" | grep '^IPv6 IP address' | awk '/ address/ {print substr($0, index($0, $4))}')
   if [[ "$ipv6" == "none" ]]; then
     echo ""
   else
