@@ -2,6 +2,7 @@
 
 . src/workflow_handler.sh
 . src/media.sh
+. src/autoupdate.sh
 
 # Single entry point. Every command lives under the "net" keyword:
 #   net            -> catalog of commands
@@ -47,6 +48,14 @@ catalog() {
   cat_item wifilist "$filter" "Wi-Fi List" "Scan for nearby Wi-Fi networks"                 "$ICON_WIFI" "wifilist "
   cat_item vpn      "$filter" "VPN"        "List configured VPNs and connect"               "$ICON_VPN"  "vpn "
   cat_item dns      "$filter" "DNS"        "List and change DNS for the primary connection" "$ICON_DNS"  "dns "
+  # The autoupdate toggle shows on the unfiltered catalog.
+  if [[ -z "$filter" ]]; then
+    if autoupdate_enabled; then
+      add_result "" "autoupdate off" "Autoupdate: on"  "Turn off automatic update checks" "icon.png" "yes"
+    else
+      add_result "" "autoupdate on"  "Autoupdate: off" "Turn on automatic update checks"  "icon.png" "yes"
+    fi
+  fi
   # Update is always offered last, regardless of the filter.
   add_result "" "" "Update" "Check for and install workflow updates" "icon.png" "no" "update "
   get_json_results
@@ -61,7 +70,8 @@ if [[ "$mode" == "run" ]]; then
     wifilist) . src/ap.sh "$rest" ;;
     vpn)      . src/vpn.sh "$rest" ;;
     dns)      . src/dns.sh "$rest" ;;
-    http://*|https://*) . src/update.sh "$query" ;;
+    http://*|https://*) autoupdate_clear; . src/update.sh "$query" ;;
+    autoupdate) set_autoupdate "$rest" ;;
     *) ;;
   esac
   exit
@@ -69,6 +79,8 @@ fi
 
 # List mode
 if [[ -z "$cmd" ]]; then
+  autoupdate_refresh
+  autoupdate_banner
   catalog ""
 elif is_subcommand "$cmd"; then
   if [[ "$cmd" == "update" ]]; then
