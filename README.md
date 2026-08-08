@@ -30,7 +30,7 @@ Everything lives under one keyword. Type `net` to see the command catalog, then 
 | `net wifilist` | Scan for Wi-Fi networks and connect.            |
 | `net vpn`      | List configured VPNs and connect.               |
 | `net dns`      | List and change DNS for the primary connection. |
-| `net update`   | Check for and install workflow updates.         |
+| `net >`        | Settings and updates: edit DNS presets, check for updates, autoupdate. |
 
 The catalog also offers an **Autoupdate** toggle. When on, `net` checks for a
 new version once a day and shows an "Update available" item.

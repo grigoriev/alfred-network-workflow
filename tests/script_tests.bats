@@ -17,26 +17,31 @@ setup() {
   [ "$status" -eq 0 ]
   [[ "$output" =~ '"autocomplete":"wifi ' ]]
   [[ "$output" =~ '"autocomplete":"vpn ' ]]
-  echo "$output" | jq -e '.items[-1].title == "Update"' >/dev/null
 }
 
-@test "net.sh: catalog filters but keeps update last" {
+@test "net.sh: catalog filters to the matching command" {
   run bash -c '. src/net.sh list "v"'
   [[ "$output" =~ "VPN" ]]
   [[ ! "$output" =~ "Wi-Fi" ]]
-  echo "$output" | jq -e '[.items[].title] == ["VPN", "Update"]' >/dev/null
+  echo "$output" | jq -e '[.items[].title] == ["VPN"]' >/dev/null
 }
 
-@test "net.sh: catalog offers an autoupdate toggle on the home view" {
+@test "net.sh: the catalog has no inline update or toggle items" {
   run bash -c '. src/net.sh list ""'
-  echo "$output" | jq -e '[.items[].title] | index("Autoupdate: off") != null' >/dev/null
+  echo "$output" | jq -e '[.items[].title] | index("Update") == null and index("Autoupdate: off") == null' >/dev/null
 }
 
-@test "net.sh: run autoupdate on enables it and the toggle flips" {
+@test "net.sh: > lists settings and update items" {
+  run bash -c '. src/net.sh list ">"'
+  echo "$output" | jq -e '[.items[].title] | index("Edit DNS presets") != null and index("Check for updates") != null and index("Activate autoupdate") != null' >/dev/null
+  echo "$output" | jq -e '.items[] | select(.title=="Edit DNS presets") | .arg == "dns EDIT"' >/dev/null
+}
+
+@test "net.sh: run autoupdate on enables it and > reflects it" {
   run bash -c '. src/net.sh run "autoupdate on"'
   [ -f "$alfred_workflow_data/autoupdate" ]
-  run bash -c '. src/net.sh list ""'
-  echo "$output" | jq -e '[.items[].title] | index("Autoupdate: on") != null' >/dev/null
+  run bash -c '. src/net.sh list ">"'
+  echo "$output" | jq -e '[.items[].title] | index("Deactivate autoupdate") != null' >/dev/null
 }
 
 @test "net.sh: shows an update banner when one is pending" {
@@ -104,12 +109,12 @@ STUB
   [ "$status" -eq 0 ]
 }
 
-@test "net.sh: list update dispatches to the updater" {
+@test "net.sh: > update dispatches to the updater" {
   cat > src/update.sh <<'STUB'
 #!/bin/bash
 echo "updater list [$1]"
 STUB
-  run bash -c '. src/net.sh list "update"'
+  run bash -c '. src/net.sh list "> update"'
   rm -f src/update.sh
   [[ "$output" =~ "updater list []" ]]
 }
