@@ -17,7 +17,7 @@ cmd="${query%% *}"
 rest="${query#"$cmd"}"
 rest="${rest# }"
 
-subcommands="wifi eth wifilist vpn dns update"
+subcommands="wifi eth wifilist vpn dns"
 
 is_subcommand() {
   local target="$1"
@@ -48,16 +48,18 @@ catalog() {
   cat_item wifilist "$filter" "Wi-Fi List" "Scan for nearby Wi-Fi networks"                 "$ICON_WIFI" "wifilist "
   cat_item vpn      "$filter" "VPN"        "List configured VPNs and connect"               "$ICON_VPN"  "vpn "
   cat_item dns      "$filter" "DNS"        "List and change DNS for the primary connection" "$ICON_DNS"  "dns "
-  # The autoupdate toggle shows on the unfiltered catalog.
-  if [[ -z "$filter" ]]; then
-    if autoupdate_enabled; then
-      add_result "" "autoupdate off" "Autoupdate: on"  "Turn off automatic update checks" "icon.png" "yes"
-    else
-      add_result "" "autoupdate on"  "Autoupdate: off" "Turn on automatic update checks"  "icon.png" "yes"
-    fi
+  get_json_results
+  return 0
+}
+
+# The ">" menu, filtered by a substring: settings and the shared update items.
+globals_menu() {
+  local filter="$1" lc
+  lc="$(printf '%s' "$filter" | tr '[:upper:]' '[:lower:]')"
+  if [[ "edit dns presets" == *"$lc"* ]]; then
+    add_result "" "dns EDIT" "Edit DNS presets" "Open the DNS presets file in a text editor" "$ICON_DNS" "yes"
   fi
-  # Update is always offered last, regardless of the filter.
-  add_result "" "" "Update" "Check for and install workflow updates" "icon.png" "no" "update "
+  autoupdate_menu "$filter" "icon.png"
   get_json_results
   return 0
 }
@@ -78,25 +80,27 @@ if [[ "$mode" == "run" ]]; then
 fi
 
 # List mode
-if [[ -z "$cmd" ]]; then
+if [[ "$cmd" == ">" ]]; then
+  # ">" opens the settings and updates menu; "> update" checks for a new version
+  if [[ "$rest" == update* ]]; then
+    . src/update.sh ""
+  else
+    globals_menu "$rest"
+  fi
+elif [[ -z "$cmd" ]]; then
   autoupdate_refresh
   autoupdate_banner
   catalog ""
 elif is_subcommand "$cmd"; then
-  if [[ "$cmd" == "update" ]]; then
-    # The shared updater builds its own arg (a download URL), so no prefix
-    . src/update.sh "$rest"
-  else
-    ARG_PREFIX="$cmd "
-    case "$cmd" in
-      wifi)     . src/wifi.sh "$rest" ;;
-      eth)      . src/ethernet.sh "$rest" ;;
-      wifilist) . src/ap.sh "$rest" ;;
-      vpn)      . src/vpn.sh "$rest" ;;
-      dns)      . src/dns.sh "$rest" ;;
-      *) : ;;
-    esac
-  fi
+  ARG_PREFIX="$cmd "
+  case "$cmd" in
+    wifi)     . src/wifi.sh "$rest" ;;
+    eth)      . src/ethernet.sh "$rest" ;;
+    wifilist) . src/ap.sh "$rest" ;;
+    vpn)      . src/vpn.sh "$rest" ;;
+    dns)      . src/dns.sh "$rest" ;;
+    *) : ;;
+  esac
 else
   catalog "$cmd"
 fi
