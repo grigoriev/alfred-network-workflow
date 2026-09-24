@@ -85,6 +85,8 @@ make clean     # remove the build artifact and fetched files
 
 Install the tools with `brew install bats-core shellcheck jq`. System commands are replaced by mocks under `tests/mocks/bin`, so the action scripts run deterministically without touching real network state. The Wi-Fi scanner ([`src/wifi-scan.js`](src/wifi-scan.js)) is unit tested via a `WIFI_SCAN_TEST` hook that feeds it fixed data instead of scanning.
 
+One test queries OpenDNS for the global IP. It is skipped unless you set `LIVE_DNS_TEST=1` (`LIVE_DNS_TEST=1 make test`).
+
 The update logic is shared, not vendored. `make build` fetches the
 [updater bundle](https://github.com/grigoriev/alfred-workflow-updater)
 (`update.sh` and `autoupdate.sh`) at build time and bundles it, so it is never

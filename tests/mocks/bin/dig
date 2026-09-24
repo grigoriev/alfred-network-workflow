@@ -1,2 +1,13 @@
 #!/bin/bash
-echo "203.0.113.5"
+# Mock of dig. Prints MOCK_DIG_OUTPUT (a fixed IP when unset).
+# Records its arguments in the MOCK_DIG_ARGS file when that is set.
+if [[ -n "$MOCK_DIG_ARGS" ]]; then
+  echo "$*" > "$MOCK_DIG_ARGS"
+fi
+if [[ -n "${MOCK_DIG_OUTPUT+set}" ]]; then
+  if [[ -n "$MOCK_DIG_OUTPUT" ]]; then
+    echo "$MOCK_DIG_OUTPUT"
+  fi
+else
+  echo "203.0.113.5"
+fi
