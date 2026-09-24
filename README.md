@@ -3,6 +3,7 @@
 ![CI](https://github.com/grigoriev/alfred-network-workflow/actions/workflows/ci.yml/badge.svg)
 [![Release](https://img.shields.io/github/v/release/grigoriev/alfred-network-workflow)](https://github.com/grigoriev/alfred-network-workflow/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/grigoriev/alfred-network-workflow/badge)](https://scorecard.dev/viewer/?uri=github.com/grigoriev/alfred-network-workflow)
 [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=grigoriev_alfred-network-workflow&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=grigoriev_alfred-network-workflow)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=grigoriev_alfred-network-workflow&metric=coverage)](https://sonarcloud.io/summary/new_code?id=grigoriev_alfred-network-workflow)
 
@@ -81,6 +82,13 @@ stored in this repository.
 ## Releases
 
 Run the **Bump Version & Release** workflow from the Actions tab and pick `patch`, `minor` or `major`. It bumps the version, tags it, and the release workflow builds `Network.alfredworkflow` and publishes a GitHub Release with the asset attached. Pushing a `v*` tag by hand does the same.
+
+## Disclaimer
+
+This workflow is provided "as is", without warranty of any kind, as the LICENSE states. Use
+it at your own risk. Sergey Grigoriev is not liable for damage from its use, as far as the law
+allows. It is published free of charge, outside of any commercial offering, with no
+obligation to support it. Security reports are welcome, see SECURITY.md.
 
 ## Credits
 
