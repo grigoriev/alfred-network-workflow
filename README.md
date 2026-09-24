@@ -95,7 +95,7 @@ stored in this repository.
 
 ## Releases
 
-Run the **Bump Version & Release** workflow from the Actions tab and pick `patch`, `minor` or `major`. It bumps the version, tags it, and the release workflow builds `Network.alfredworkflow` and publishes a GitHub Release with the asset attached. Pushing a `v*` tag by hand does the same.
+Run the **Bump Version & Release** workflow from the Actions tab and pick `patch`, `minor` or `major`. It bumps the version, moves the Unreleased entries of `CHANGELOG.md` into a section for the new version, and tags it. The release workflow builds `Network.alfredworkflow` and publishes a GitHub Release with the asset attached and the notes from that section. A `v*` tag pushed by hand needs its `CHANGELOG.md` section first.
 
 ## Disclaimer
 
