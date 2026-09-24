@@ -72,14 +72,53 @@ load variables
   [ "$output" = "<redacted>" ]
 }
 
+# get_global_ip runs the dig mock from tests/mocks/bin, not a live query.
+
 @test "get_global_ip: get global IP" {
+  export PATH="$BATS_TEST_DIRNAME/mocks/bin:$PATH"
+  export MOCK_DIG_ARGS="$BATS_TEST_TMPDIR/dig-args"
   run get_global_ip
-  [[ "$output" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]
+  [ "$status" -eq 0 ]
+  [ "$output" = "203.0.113.5" ]
+  [ "$(cat "$MOCK_DIG_ARGS")" = "-4 +time=2 +tries=1 +short myip.opendns.com @resolver1.opendns.com" ]
+}
+
+@test "get_global_ip: pass a custom resolver to dig" {
+  export PATH="$BATS_TEST_DIRNAME/mocks/bin:$PATH"
+  export MOCK_DIG_ARGS="$BATS_TEST_TMPDIR/dig-args"
+  export MOCK_DIG_OUTPUT="198.51.100.7"
+  run get_global_ip "whoami.example @ns.example"
+  [ "$output" = "198.51.100.7" ]
+  [ "$(cat "$MOCK_DIG_ARGS")" = "-4 +time=2 +tries=1 +short whoami.example @ns.example" ]
 }
 
 @test "get_global_ip: handle invalid resolver" {
+  export PATH="$BATS_TEST_DIRNAME/mocks/bin:$PATH"
+  export MOCK_DIG_OUTPUT=";; communications error: no servers could be reached"
   run get_global_ip "non-existing"
-  [[ "$output" = "" ]]
+  [ "$status" -eq 0 ]
+  [ "$output" = "" ]
+}
+
+@test "get_global_ip: handle an empty answer" {
+  export PATH="$BATS_TEST_DIRNAME/mocks/bin:$PATH"
+  export MOCK_DIG_OUTPUT=""
+  run get_global_ip
+  [ "$status" -eq 0 ]
+  [ "$output" = "" ]
+}
+
+@test "get_global_ip: reject an answer that is not an IPv4 address" {
+  export PATH="$BATS_TEST_DIRNAME/mocks/bin:$PATH"
+  export MOCK_DIG_OUTPUT="myip.example."
+  run get_global_ip
+  [ "$output" = "" ]
+}
+
+@test "get_global_ip: live query to OpenDNS (LIVE_DNS_TEST=1)" {
+  [[ "$LIVE_DNS_TEST" = "1" ]] || skip "set LIVE_DNS_TEST=1 to query OpenDNS"
+  run get_global_ip
+  [[ "$output" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]
 }
 
 @test "get_vpn: get connected VPN" {
