@@ -20,6 +20,16 @@ This is a maintained fork of [mrodalgaard/alfred-network-workflow](https://githu
 
 Alfred [Powerpack](https://www.alfredapp.com/powerpack/) is required.
 
+### Verify
+
+Each release carries `Network.alfredworkflow.intoto.jsonl`, a signed build
+provenance bundle. Check that this repository's release workflow built the
+download:
+
+```sh
+gh attestation verify Network.alfredworkflow --repo grigoriev/alfred-network-workflow
+```
+
 ## Usage
 
 Everything lives under one keyword. Type `net` to see the command catalog, then keep typing (`net v`) or press <kbd>Tab</kbd> to drill into a command.
