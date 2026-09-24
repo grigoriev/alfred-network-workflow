@@ -6,7 +6,7 @@
 [![Release](https://img.shields.io/github/v/release/grigoriev/alfred-network-workflow)](https://github.com/grigoriev/alfred-network-workflow/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=grigoriev_alfred-network-workflow&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=grigoriev_alfred-network-workflow)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=grigoriev_alfred-network-workflow&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=grigoriev_alfred-network-workflow)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=grigoriev_alfred-network-workflow&metric=coverage)](https://sonarcloud.io/summary/new_code?id=grigoriev_alfred-network-workflow)
 
 Alfred workflow that shows and changes your network settings: Wi-Fi, Ethernet, VPN and DNS.
@@ -84,7 +84,7 @@ make build    # fetch the updater and build Network.alfredworkflow
 make clean     # remove the build artifact and fetched files
 ```
 
-Install the tools with `brew install bats-core shellcheck jq`. System commands are replaced by mocks under `tests/mocks/bin`, so the action scripts run deterministically without touching real network state. The Wi-Fi scanner ([`src/wifi-scan.js`](src/wifi-scan.js)) is unit tested via a `WIFI_SCAN_TEST` hook that feeds it fixed data instead of scanning.
+Install the tools with `brew install bats-core jq`. `make lint` runs ShellCheck in Docker. System commands are replaced by mocks under `tests/mocks/bin`, so the action scripts run deterministically without touching real network state. The Wi-Fi scanner ([`src/wifi-scan.js`](src/wifi-scan.js)) is unit tested via a `WIFI_SCAN_TEST` hook that feeds it fixed data instead of scanning.
 
 One test queries OpenDNS for the global IP. It is skipped unless you set `LIVE_DNS_TEST=1` (`LIVE_DNS_TEST=1 make test`).
 
@@ -97,6 +97,14 @@ stored in this repository.
 
 Run the **Bump Version & Release** workflow from the Actions tab and pick `patch`, `minor` or `major`. It bumps the version, moves the Unreleased entries of `CHANGELOG.md` into a section for the new version, and tags it. The release workflow builds `Network.alfredworkflow` and publishes a GitHub Release with the asset attached and the notes from that section. A `v*` tag pushed by hand needs its `CHANGELOG.md` section first.
 
+## Credits
+
+A fork of the original workflow by [Martin Rodalgaard](https://github.com/mrodalgaard/alfred-network-workflow).
+
+## Contributing
+
+Issues and pull requests are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Disclaimer
 
 This workflow is provided "as is", without warranty of any kind, as the LICENSE states. Use
@@ -104,8 +112,7 @@ it at your own risk. Sergey Grigoriev is not liable for damage from its use, as 
 allows. It is published free of charge, outside of any commercial offering, with no
 obligation to support it. Security reports are welcome, see SECURITY.md.
 
-## Credits
+## License
 
-A fork of the original workflow by [Martin Rodalgaard](https://github.com/mrodalgaard/alfred-network-workflow). Contributions, bug reports and feature requests are welcome.
-
-Licensed under the MIT License. See [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE). The copyright of the original work stays with
+Martin Rodalgaard.
